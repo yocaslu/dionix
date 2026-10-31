@@ -13,4 +13,7 @@
     efi.canTouchEfiVariables = true;
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  # Emula ARM (QEMU) para compilar a imagem e as atualizações do Raspberry Pi
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 }

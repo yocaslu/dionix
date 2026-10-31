@@ -7,6 +7,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
 | `server` | VM no Proxmox do homelab | base + VM Proxmox + host Docker |
+| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
 
@@ -26,6 +27,10 @@ modules/nixos/
   desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
   docker-host.nix          Docker, limpeza automática, oci-containers
   proxmox-vm.nix           agente QEMU, console serial, GRUB
+  raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão
+  tailscale-router.nix     subnet router e exit node da tailnet
+  dns-server.nix           Technitium DNS Server (painel na 5380, só pelo proxy)
+  reverse-proxy.nix        Nginx: <nome>.<domínio> → serviço, HTTPS opcional (ACME DNS-01)
 home/
   cli/                     zsh, Bash, git, tmux, Neovim, Helix, Vim, yazi, btop…
   desktop/                 Sway, Waybar, menus, notificações, tema e apps
@@ -85,7 +90,30 @@ Depois da primeira instalação, dá para aplicar mudanças nos servidores a par
 nixos-rebuild switch --flake .#server --target-host dio@<ip-do-servidor> --sudo
 ```
 
-Para mais servidores, copie `hosts/server/` para `hosts/<nome>/` e adicione o nome na lista do `flake.nix`.
+Para mais servidores, copie `hosts/server/` para `hosts/<nome>/` e adicione o nome (e a arquitetura) em `hosts` no `flake.nix`.
+
+### Raspberry Pi (roteador, DNS e proxy)
+
+O `pi` não tem instalador: o flake gera a imagem do cartão SD já configurada. O `desktop` emula ARM (`boot.binfmt.emulatedSystems`), então a imagem compila nele depois de um `rebuild`:
+
+```sh
+nix build .#packages.aarch64-linux.pi-image
+zstdcat result/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+1. Ligue o Pi no cabo e reserve o IP dele no DHCP do roteador (ou fixe em `hosts/pi/default.nix`).
+2. Entre com `ssh dio@<ip-do-pi>` (só chave; o `sudo` não pede senha) e rode `sudo tailscale up`.
+3. No painel do Tailscale, aprove as rotas (`10.42.1.0/24`) e o exit node do `pi`, e em **DNS → Nameservers** aponte o DNS global para o IP 100.x do Pi.
+4. Abra o painel do Technitium (`ssh -L 5380:localhost:5380 dio@<ip-do-pi>` e `http://localhost:5380`), defina a senha de admin e crie a zona `home.arpa` com um registro `*` (A) para o IP do Pi. A partir daí ele também fica em `http://dns.home.arpa`.
+5. Aponte o DNS do DHCP do roteador para o Pi, se quiser que a rede toda use o Technitium.
+
+Os serviços do proxy ficam em `dionix.proxy.hosts` (`hosts/pi/default.nix`). Para HTTPS, troque `home.arpa` por um domínio seu, ative `dionix.proxy.acme` e crie no Pi o `/var/lib/secrets/acme.env` com o token do provedor (ex.: `CF_DNS_API_TOKEN=...`).
+
+Atualizações a partir do desktop:
+
+```sh
+nixos-rebuild switch --flake .#pi --target-host dio@<ip-do-pi> --sudo
+```
 
 #### Containers
 
@@ -101,7 +129,7 @@ O `docker-host.nix` aceita as duas formas:
 | `rebuild` | Aplica a configuração (`nh os switch`) |
 | `syu` | Atualiza o `flake.lock` e aplica (`nh os switch --update`) |
 | `nh os switch --dry` | Mostra o que mudaria, sem aplicar |
-| `nix flake check` | Avalia os três hosts (sem compilar nada) |
+| `nix flake check` | Avalia todos os hosts (sem compilar nada) |
 | `nix fmt` | Formata os arquivos `.nix` |
 
 O `nh` também limpa gerações antigas sozinho (mantém as dos últimos 14 dias e no mínimo 5). Para voltar a uma geração anterior, escolha-a no menu do boot ou rode `sudo nixos-rebuild switch --rollback`.

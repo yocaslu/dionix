@@ -44,9 +44,17 @@
       username = "dio";
       pkgs = nixpkgs.legacyPackages.${system};
 
+      # Hosts e a arquitetura de cada um
+      hosts = {
+        notebook = "x86_64-linux";
+        desktop = "x86_64-linux";
+        server = "x86_64-linux";
+        pi = "aarch64-linux";
+      };
+
       # Monta um host: o módulo dele (hosts/<nome>) escolhe os papéis em modules/nixos
       mkHost =
-        hostname:
+        hostname: system:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit inputs username hostname; };
@@ -61,16 +69,15 @@
         };
     in
     {
-      nixosConfigurations = nixpkgs.lib.genAttrs [
-        "notebook"
-        "desktop"
-        "server"
-      ] mkHost;
+      nixosConfigurations = nixpkgs.lib.mapAttrs mkHost hosts;
+
+      # Imagem do cartão SD do Raspberry Pi (compila no desktop via emulação ARM)
+      packages.aarch64-linux.pi-image = self.nixosConfigurations.pi.config.system.build.sdImage;
 
       # `nix fmt` formata todos os arquivos .nix
       formatter.${system} = pkgs.nixfmt-tree;
 
-      # `nix flake check` avalia os três hosts por completo (sem compilar nada)
+      # `nix flake check` avalia todos os hosts por completo (sem compilar nada)
       checks.${system} =
         nixpkgs.lib.mapAttrs (
           name: host:
