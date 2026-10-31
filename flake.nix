@@ -11,6 +11,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Paletas base16 aplicadas aos aplicativos (home/desktop/themes.nix)
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Arquivos de terceiros que antes vinham do .chezmoiexternal.toml / TPM / ya pkg
     yazi-flavors = {
       url = "github:yazi-rs/flavors";

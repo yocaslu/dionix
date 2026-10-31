@@ -1,7 +1,8 @@
 # Ambiente gráfico (notebook e desktop): SwayFX + Waybar + Fuzzel + Alacritty,
-# tudo em Catppuccin Mocha. Importado por modules/nixos/workstation.nix.
+# com a paleta do tema ativo. Importado por modules/nixos/workstation.nix.
 {
   imports = [
+    ./themes.nix
     ./sway.nix
     ./waybar.nix
     ./menus.nix

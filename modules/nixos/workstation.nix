@@ -3,11 +3,23 @@
 # A parte do usuário (configs do Sway, Waybar, tema…) fica em home/desktop.
 {
   config,
+  inputs,
   pkgs,
   username,
   ...
 }:
 {
+  imports = [ inputs.stylix.nixosModules.stylix ];
+
+  # Sem alvos no sistema: o tema fica no Home Manager (home/desktop/themes.nix),
+  # e o tuigreet e o XFCE não mudam
+  stylix = {
+    enable = true;
+    autoEnable = false;
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+    homeManagerIntegration.followSystem = false;
+  };
+
   # Sessões gráficas -------------------------------------------------------
 
   # SwayFX (Sway com blur, sombras e escurecimento). O Home Manager gera a
