@@ -91,7 +91,7 @@ check "reaplicação sem o tema na geração nova avisa" '[ $status = 0 ] && [ "
 
 setup nord
 run --reapply "$root/gen"
-check "reaplica o tema salvo" '[ $status = 0 ] && called "nord skip=" && saved nord'
+check "reaplica o tema salvo e reinicia os serviços" '[ $status = 0 ] && called "nord skip=" && saved nord && called systemctl'
 
 setup nord
 DIONIX_THEME_SKIP_REAPPLY=1 run --reapply "$root/gen"
@@ -113,6 +113,11 @@ check "sem tema salvo fica o padrão" '[ $status = 0 ] && [ ! -s "$root/calls" ]
 setup nord
 ACTIVATE_STATUS=3 run --reapply "$root/gen"
 check "falha ao reaplicar não derruba o rebuild" '[ $status = 0 ] && grep -q nord "$root/output"'
+
+setup nord
+fake_command systemctl 'exit 1'
+run --reapply "$root/gen"
+check "falha ao reiniciar serviços não derruba o rebuild" '[ $status = 0 ] && called "nord skip="'
 
 if [ "$failures" != 0 ]; then
   echo "$failures caso(s) falharam"

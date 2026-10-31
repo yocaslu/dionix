@@ -6,7 +6,7 @@
 :root {
   --cc-bg: @base00@;
   --noti-border-color: @base02@;
-  --noti-bg: 30, 30, 46;
+  --noti-bg: @base00-rgb@;
   --noti-bg-alpha: 1;
   --noti-bg-darker: @base00@;
   --noti-bg-hover: @base01@;

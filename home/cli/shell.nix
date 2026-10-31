@@ -32,6 +32,27 @@ let
   sourceBashModules = lib.concatMapStrings (m: ''
     [[ -r ${bashDir}/${m}.sh ]] && source ${bashDir}/${m}.sh
   '') bashModules;
+  # Cores do fzf, em um arquivo de caminho fixo: FZF_DEFAULT_OPTS é herdada da
+  # sessão e manteria as cores do tema vigente no login
+  fzfColors = lib.concatStringsSep "," (
+    lib.mapAttrsToList (name: value: "${name}:${value}") {
+      "bg+" = "${config.dionix.colors.base01}";
+      bg = "${config.dionix.colors.base00}";
+      spinner = "${config.dionix.colors.base06}";
+      hl = "${config.dionix.colors.base08}";
+      fg = "${config.dionix.colors.base05}";
+      header = "${config.dionix.colors.base08}";
+      info = "${config.dionix.colors.base0E}";
+      pointer = "${config.dionix.colors.base06}";
+      marker = "${config.dionix.colors.base07}";
+      "fg+" = "${config.dionix.colors.base05}";
+      prompt = "${config.dionix.colors.base0E}";
+      "hl+" = "${config.dionix.colors.base08}";
+      selected-bg = "${config.dionix.colors.base02}";
+      border = "${config.dionix.colors.base03}";
+      label = "${config.dionix.colors.base05}";
+    }
+  );
 in
 {
   home.sessionVariables = {
@@ -39,6 +60,7 @@ in
     VISUAL = "vim";
     # Usado pelos módulos do Bash reaproveitados (py.sh, shell.sh)
     REPO_PATH = "$HOME/repos";
+    FZF_DEFAULT_OPTS_FILE = "${config.xdg.configHome}/fzf/colors";
   };
   home.sessionPath = [
     "$HOME/.local/bin"
@@ -119,6 +141,7 @@ in
   };
 
   xdg.configFile = {
+    "fzf/colors".text = "--color=${fzfColors}\n";
     "zsh/aliases.zsh".source = ./files/zsh/aliases.zsh;
     "zsh/functions.zsh".source = ./files/zsh/functions.zsh;
     "zsh/fzf.zsh".source = ./files/zsh/fzf.zsh;
@@ -171,23 +194,5 @@ in
       "--layout=reverse"
       "--border"
     ];
-    # Cores do tema ativo
-    colors = {
-      "bg+" = "${config.dionix.colors.base01}";
-      bg = "${config.dionix.colors.base00}";
-      spinner = "${config.dionix.colors.base06}";
-      hl = "${config.dionix.colors.base08}";
-      fg = "${config.dionix.colors.base05}";
-      header = "${config.dionix.colors.base08}";
-      info = "${config.dionix.colors.base0E}";
-      pointer = "${config.dionix.colors.base06}";
-      marker = "${config.dionix.colors.base07}";
-      "fg+" = "${config.dionix.colors.base05}";
-      prompt = "${config.dionix.colors.base0E}";
-      "hl+" = "${config.dionix.colors.base08}";
-      selected-bg = "${config.dionix.colors.base02}";
-      border = "${config.dionix.colors.base03}";
-      label = "${config.dionix.colors.base05}";
-    };
   };
 }

@@ -30,8 +30,12 @@ reapply() {
     return 0
   fi
   # Um tema que não aplica não pode derrubar o rebuild
-  "$generation/specialisation/$saved/activate" ||
+  if "$generation/specialisation/$saved/activate"; then
+    # A ativação aninhada não reinicia os serviços que a base acabou de subir
+    reload_session
+  else
     echo "theme: não foi possível reaplicar '$saved'; mantendo $DIONIX_DEFAULT_THEME" >&2
+  fi
 }
 
 reload_session() {
