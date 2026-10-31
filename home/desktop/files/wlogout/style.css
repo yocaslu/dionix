@@ -1,0 +1,38 @@
+/* wlogout - visual TUI com Catppuccin Mocha (igual à Waybar e ao Sway)
+ * Só texto, sem ícones: caixas de 1px e foco em vídeo invertido.
+ */
+
+* {
+    background-image: none;
+    box-shadow: none;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 16px;
+}
+
+window {
+    background-color: rgba(30, 30, 46, 0.85);
+}
+
+button {
+    border-radius: 0;
+    border: 1px solid #45475a;
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    margin: 4px;
+}
+
+button:focus,
+button:active,
+button:hover {
+    background-color: #cba6f7;
+    border-color: #cba6f7;
+    color: #1e1e2e;
+    outline-style: none;
+}
+
+/* Ações destrutivas acendem em vermelho */
+#reboot:focus, #reboot:hover,
+#shutdown:focus, #shutdown:hover {
+    background-color: #f38ba8;
+    border-color: #f38ba8;
+}

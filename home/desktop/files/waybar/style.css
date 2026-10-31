@@ -1,0 +1,225 @@
+/* Waybar - visual TUI com Catppuccin Mocha
+ * Caixas de 1px com cantos retos, texto monoespaçado e vídeo invertido para destaque.
+ *
+ * base #1e1e2e  surface0 #313244  surface1 #45475a  overlay0 #6c7086
+ * text #cdd6f4  subtext0 #a6adc8  mauve #cba6f7     red #f38ba8
+ * peach #fab387 yellow #f9e2af    green #a6e3a1     teal #94e2d5
+ * sky #89dceb   sapphire #74c7ec  blue #89b4fa      lavender #b4befe
+ */
+
+* {
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+window#waybar {
+    /* Levemente translúcida para o blur do SwayFX (layer_effects) */
+    background-color: rgba(30, 30, 46, 0.85);
+    border-top: 1px solid #45475a;
+    color: #cdd6f4;
+}
+
+.modules-left {
+    margin-left: 4px;
+}
+
+.modules-right {
+    margin-right: 4px;
+}
+
+/* Cada módulo é uma "janela" de TUI */
+#workspaces,
+#mode,
+#scratchpad,
+#mpd,
+#idle_inhibitor,
+#pulseaudio,
+#bluetooth,
+#network,
+#power-profiles-daemon,
+#temperature,
+#backlight,
+#language,
+#battery,
+#custom-notification,
+#custom-sys,
+#custom-cava,
+#custom-updates,
+#custom-weather,
+#clock,
+#tray,
+#custom-power {
+    background-color: transparent;
+    border: 1px solid #45475a;
+    padding: 0 8px;
+    margin: 4px 0;
+}
+
+/* Workspaces: o focado aparece em vídeo invertido, como no tmux */
+#workspaces {
+    padding: 0;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    color: #6c7086;
+    background: transparent;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+#workspaces button.visible {
+    color: #cdd6f4;
+}
+
+#workspaces button.focused {
+    background-color: #cba6f7;
+    color: #1e1e2e;
+    font-weight: bold;
+}
+
+#workspaces button.urgent {
+    background-color: #f38ba8;
+    color: #1e1e2e;
+}
+
+#workspaces button:hover {
+    background-color: #313244;
+    color: #cdd6f4;
+}
+
+#mode {
+    background-color: #fab387;
+    border-color: #fab387;
+    color: #1e1e2e;
+    font-weight: bold;
+}
+
+#window {
+    color: #a6adc8;
+}
+
+/* Cor de cada módulo (o rótulo herda esta cor, esmaecida) */
+#scratchpad            { color: #b4befe; }
+#mpd                   { color: #a6e3a1; }
+#idle_inhibitor        { color: #6c7086; }
+#pulseaudio            { color: #89b4fa; }
+#bluetooth             { color: #74c7ec; }
+#network               { color: #94e2d5; }
+#power-profiles-daemon { color: #f9e2af; }
+#temperature           { color: #fab387; }
+#backlight             { color: #f9e2af; }
+#language              { color: #b4befe; }
+#battery               { color: #a6e3a1; }
+#custom-notification   { color: #6c7086; }
+#custom-power          { color: #f38ba8; }
+#custom-sys            { color: #9399b2; }
+#custom-cava           { color: #cba6f7; }
+#custom-updates        { color: #fab387; }
+#custom-weather        { color: #89dceb; }
+
+/* Gaveta "sys": os módulos escondidos ganham um espaço entre si */
+#sys .drawer-child {
+    margin-right: 4px;
+}
+
+#custom-power:hover {
+    background-color: #f38ba8;
+    border-color: #f38ba8;
+    color: #1e1e2e;
+}
+
+/* Notificações pendentes acendem o módulo; "não perturbe" fica em peach */
+#custom-notification.notification,
+#custom-notification.inhibited-notification {
+    color: #cba6f7;
+    border-color: #cba6f7;
+}
+
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification,
+#custom-notification.dnd-inhibited-none,
+#custom-notification.dnd-inhibited-notification {
+    color: #fab387;
+}
+
+#clock {
+    background-color: #cba6f7;
+    border-color: #cba6f7;
+    color: #1e1e2e;
+    font-weight: bold;
+}
+
+/* Estados */
+#idle_inhibitor.activated {
+    color: #f9e2af;
+    border-color: #f9e2af;
+}
+
+#pulseaudio.muted,
+#bluetooth.disabled,
+#bluetooth.off,
+#mpd.disconnected,
+#mpd.stopped {
+    color: #6c7086;
+}
+
+#network.disconnected {
+    color: #f38ba8;
+    border-color: #f38ba8;
+}
+
+#power-profiles-daemon.performance {
+    color: #f38ba8;
+}
+
+#power-profiles-daemon.power-saver {
+    color: #a6e3a1;
+}
+
+#battery.charging,
+#battery.plugged {
+    border-color: #a6e3a1;
+}
+
+#battery.warning:not(.charging),
+#temperature.warning {
+    color: #f9e2af;
+    border-color: #f9e2af;
+}
+
+#battery.critical:not(.charging),
+#temperature.critical {
+    color: #f38ba8;
+    border-color: #f38ba8;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: steps(2);
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink {
+    to {
+        background-color: #f38ba8;
+        color: #1e1e2e;
+    }
+}
+
+#tray > .needs-attention {
+    background-color: #f38ba8;
+}
+
+/* Tooltips no mesmo estilo de caixa */
+tooltip {
+    background-color: #1e1e2e;
+    border: 1px solid #cba6f7;
+}
+
+tooltip label {
+    color: #cdd6f4;
+}

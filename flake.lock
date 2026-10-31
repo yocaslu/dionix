@@ -1,0 +1,117 @@
+{
+  "nodes": {
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792818383,
+        "narHash": "sha256-199i7ubVSXTMl+0AAlL7cVCXSjcI+jWByMcimYjeMX0=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "24f2190587513b9c2f73db112a17844ae912d965",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "release-26.05",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1793294725,
+        "narHash": "sha256-loLMnbbS4KhmG2ln9EY6f0YMNCA273Yx02oWYQ9IMeE=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6f06d204d8f2d8761d9da78778745974a3216381",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1793341285,
+        "narHash": "sha256-Y1CiZ4SoBUjLQyQM/pY+rS2dXD3CHLPstF0lmOc73D4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1c89083e451e891152365b799595cf7790a43325",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "home-manager": "home-manager",
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "tmux-cargo": "tmux-cargo",
+        "tmux-ping": "tmux-ping",
+        "yazi-flavors": "yazi-flavors"
+      }
+    },
+    "tmux-cargo": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1669207377,
+        "narHash": "sha256-lxtU7aGtKa//+PyJVDqSTK2IFX2bhYp2z+zKEG5Pn+g=",
+        "owner": "idevtier",
+        "repo": "tmux-cargo",
+        "rev": "fadf001897868e924ea93593a47b9b66a60d1598",
+        "type": "github"
+      },
+      "original": {
+        "owner": "idevtier",
+        "repo": "tmux-cargo",
+        "type": "github"
+      }
+    },
+    "tmux-ping": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1722517456,
+        "narHash": "sha256-Sr+UfJIhuMdapuiLCqRnC0QcyG2vbjuyhkG0z6Sz1G0=",
+        "owner": "ayzenquwe",
+        "repo": "tmux-ping",
+        "rev": "853175737b5af4b6d00ba5d18e3e059c9a7e3973",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ayzenquwe",
+        "repo": "tmux-ping",
+        "type": "github"
+      }
+    },
+    "yazi-flavors": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790697555,
+        "narHash": "sha256-E1OUF1+mT0V3crVxkewG2Y7hRu8fO+0oRl6NlINmw+o=",
+        "owner": "yazi-rs",
+        "repo": "flavors",
+        "rev": "1183892c904f7f0efdf4473e856ed308b7bea98d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yazi-rs",
+        "repo": "flavors",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

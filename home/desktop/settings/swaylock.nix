@@ -1,0 +1,46 @@
+# Convertido de dot_config/swaylock/config (yocaslu/dotfiles)
+{
+  screenshots = true;
+  effect-blur = "8x5";
+  effect-vignette = "0.5:0.5";
+  fade-in = 0.2;
+  color = "1e1e2eff";
+  clock = true;
+  timestr = "%H:%M";
+  datestr = "%d/%m/%Y";
+  font = "JetBrainsMono Nerd Font";
+  font-size = 24;
+  indicator = true;
+  indicator-radius = 110;
+  indicator-thickness = 6;
+  ignore-empty-password = true;
+  show-failed-attempts = true;
+  inside-color = "1e1e2ecc";
+  inside-clear-color = "1e1e2ecc";
+  inside-ver-color = "1e1e2ecc";
+  inside-wrong-color = "1e1e2ecc";
+  inside-caps-lock-color = "1e1e2ecc";
+  ring-color = "45475aff";
+  ring-clear-color = "f9e2afff";
+  ring-ver-color = "89b4faff";
+  ring-wrong-color = "f38ba8ff";
+  ring-caps-lock-color = "fab387ff";
+  key-hl-color = "cba6f7ff";
+  bs-hl-color = "f38ba8ff";
+  caps-lock-key-hl-color = "fab387ff";
+  caps-lock-bs-hl-color = "f38ba8ff";
+  line-color = "00000000";
+  line-clear-color = "00000000";
+  line-ver-color = "00000000";
+  line-wrong-color = "00000000";
+  line-caps-lock-color = "00000000";
+  separator-color = "00000000";
+  text-color = "cdd6f4ff";
+  text-clear-color = "f9e2afff";
+  text-ver-color = "89b4faff";
+  text-wrong-color = "f38ba8ff";
+  text-caps-lock-color = "fab387ff";
+  layout-bg-color = "1e1e2eff";
+  layout-border-color = "45475aff";
+  layout-text-color = "cdd6f4ff";
+}
