@@ -101,13 +101,17 @@ nix build .#packages.aarch64-linux.pi-image
 zstdcat result/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
-1. Ligue o Pi no cabo e reserve o IP dele no DHCP do roteador (ou fixe em `hosts/pi/default.nix`).
-2. Entre com `ssh dio@<ip-do-pi>` (só chave; o `sudo` não pede senha) e rode `sudo tailscale up`.
-3. No painel do Tailscale, aprove as rotas (`10.42.1.0/24`) e o exit node do `pi`, e em **DNS → Nameservers** aponte o DNS global para o IP 100.x do Pi.
-4. Abra o painel do Technitium (`ssh -L 5380:localhost:5380 dio@<ip-do-pi>` e `http://localhost:5380`), defina a senha de admin e crie a zona `home.arpa` com um registro `*` (A) para o IP do Pi. A partir daí ele também fica em `http://dns.home.arpa`.
-5. Aponte o DNS do DHCP do roteador para o Pi, se quiser que a rede toda use o Technitium.
+1. Ligue o Pi no cabo e reserve o IP `10.42.1.2` para ele no DHCP do roteador (ou fixe em `hosts/pi/default.nix`).
+2. Entre com `ssh dio@10.42.1.2` (só chave; o `sudo` não pede senha) e rode `sudo tailscale up`.
+3. Crie o token da Cloudflare (permissão *Zone → DNS → Edit* em `vault76.com.br`) e grave no Pi:
+   `sudo install -Dm600 /dev/stdin /var/lib/secrets/acme.env <<< 'CF_DNS_API_TOKEN=...'` e `sudo systemctl restart acme-vault76.com.br`.
+4. No painel do Tailscale, aprove as rotas (`10.42.1.0/24`) e o exit node do `pi`, e em **DNS → Nameservers** aponte o DNS global para o IP 100.x do Pi.
+5. Abra o painel do Technitium (`ssh -L 5380:localhost:5380 dio@10.42.1.2` e `http://localhost:5380`), defina a senha de admin e os encaminhadores (1.1.1.1, 8.8.8.8), e crie a zona `vault76.com.br` com um registro `*` (A) para `10.42.1.2`. A partir daí o painel também fica em `https://dns.vault76.com.br`.
+6. Aponte o DNS do DHCP do roteador para o Pi, se quiser que a rede toda use o Technitium.
 
-Os serviços do proxy ficam em `dionix.proxy.hosts` (`hosts/pi/default.nix`). Para HTTPS, troque `home.arpa` por um domínio seu, ative `dionix.proxy.acme` e crie no Pi o `/var/lib/secrets/acme.env` com o token do provedor (ex.: `CF_DNS_API_TOKEN=...`).
+Os serviços do proxy ficam em `dionix.proxy.hosts` (`hosts/pi/default.nix`): uma entrada pode ser só o endereço ou ter rotas extras, uploads grandes e HSTS (veja o exemplo do Nextcloud). O certificado é um curinga `*.vault76.com.br`, renovado sozinho pelo `security.acme`.
+
+Se o Nextcloud passar a ser servido pelo Pi, inclua `10.42.1.2` no `TRUSTED_PROXIES` do `.env` dele.
 
 Atualizações a partir do desktop:
 
