@@ -1,5 +1,5 @@
 # SwayFX: tiling com navegação estilo Vim, gaps de 4px, bordas de 1px e
-# cores Catppuccin Mocha. Os programas que ficavam no "Autostart" do config
+# cores do tema ativo. Os programas que ficavam no "Autostart" do config
 # antigo agora são serviços systemd (waybar, swaync, kanshi, cliphist,
 # wlsunset, swayosd, autotiling, polkit…), presos ao sway-session.target.
 {
@@ -10,6 +10,7 @@
   ...
 }:
 let
+  c = config.dionix.colors;
   mod = "Mod4";
   left = "h";
   down = "j";
@@ -19,7 +20,8 @@ let
   term = "alacritty";
   menu = "fuzzel";
   swaylock = "${config.programs.swaylock.package}/bin/swaylock";
-  slurp = "slurp -d -b 1e1e2e66 -c cba6f7ff -s 00000000 -w 1";
+  noHash = lib.removePrefix "#";
+  slurp = "slurp -d -b ${noHash c.base00}66 -c ${noHash c.base0E}ff -s 00000000 -w 1";
 
   # Super+1…0 vai para o workspace; Super+Shift+1…0 move a janela
   workspaces = lib.genList (i: toString (i + 1)) 10;
@@ -38,7 +40,7 @@ let
     if [ -e "$HOME/Pictures/Wallpapers/.current" ]; then
       awww img "$HOME/Pictures/Wallpapers/.current" --transition-type grow
     else
-      awww clear 1e1e2e
+      awww clear ${noHash c.base00}
     fi
   '';
 in
@@ -90,44 +92,44 @@ in
         smartGaps = true;
       };
 
-      # Inativas em surface1 (#45475a), foco em mauve
+      # Inativas em base02, foco em base0E
       colors = {
         focused = {
-          border = "#cba6f7";
-          background = "#cba6f7";
-          text = "#1e1e2e";
-          indicator = "#f5c2e7";
-          childBorder = "#cba6f7";
+          border = c.base0E;
+          background = c.base0E;
+          text = c.base00;
+          indicator = c.base0E;
+          childBorder = c.base0E;
         };
         focusedInactive = {
-          border = "#45475a";
-          background = "#313244";
-          text = "#cdd6f4";
-          indicator = "#45475a";
-          childBorder = "#45475a";
+          border = c.base02;
+          background = c.base01;
+          text = c.base05;
+          indicator = c.base02;
+          childBorder = c.base02;
         };
         unfocused = {
-          border = "#45475a";
-          background = "#1e1e2e";
-          text = "#6c7086";
-          indicator = "#45475a";
-          childBorder = "#45475a";
+          border = c.base02;
+          background = c.base00;
+          text = c.base03;
+          indicator = c.base02;
+          childBorder = c.base02;
         };
         urgent = {
-          border = "#f38ba8";
-          background = "#f38ba8";
-          text = "#1e1e2e";
-          indicator = "#f38ba8";
-          childBorder = "#f38ba8";
+          border = c.base08;
+          background = c.base08;
+          text = c.base00;
+          indicator = c.base08;
+          childBorder = c.base08;
         };
         placeholder = {
-          border = "#45475a";
-          background = "#1e1e2e";
-          text = "#6c7086";
-          indicator = "#45475a";
-          childBorder = "#45475a";
+          border = c.base02;
+          background = c.base00;
+          text = c.base03;
+          indicator = c.base02;
+          childBorder = c.base02;
         };
-        background = "#1e1e2e";
+        background = c.base00;
       };
 
       input."type:keyboard".xkb_layout = "br";
@@ -244,9 +246,9 @@ in
       titlebar_padding 8 2
       titlebar_border_thickness 1
       for_window [all] title_format " %title "
-      client.focused_tab_title #45475a #313244 #cdd6f4
+      client.focused_tab_title ${c.base02} ${c.base01} ${c.base05}
 
-      ${builtins.readFile ./files/sway/fx.conf}
+      ${config.dionix.render (builtins.readFile ./files/sway/fx.conf)}
     '';
   };
 

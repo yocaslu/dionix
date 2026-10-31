@@ -1,5 +1,10 @@
 # Waybar: barra inferior no visual TUI, com gaveta "sys «", cava, atualizações e clima
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   # Scripts da barra empacotados com as dependências no PATH
   script =
@@ -37,13 +42,13 @@ let
     ]
   );
 
-  base = import ./settings/waybar.nix;
+  base = import ./settings/waybar.nix config.dionix.colors;
 in
 {
   programs.waybar = {
     enable = true;
     systemd.enable = true;
-    style = builtins.readFile ./files/waybar/style.css;
+    style = config.dionix.render (builtins.readFile ./files/waybar/style.css);
     settings.main = lib.recursiveUpdate base {
       # Visualizador de áudio; some quando não há som
       "custom/cava".exec = lib.getExe cavaScript;

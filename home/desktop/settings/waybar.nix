@@ -1,5 +1,5 @@
 # Convertido de dot_config/waybar/config.jsonc (yocaslu/dotfiles)
-{
+colors: {
   position = "bottom";
   height = 28;
   spacing = 4;
@@ -73,9 +73,9 @@
     tooltip-format = "<tt><small>{calendar}</small></tt>";
     calendar = {
       format = {
-        months = "<span color='#cba6f7'><b>{}</b></span>";
-        weekdays = "<span color='#6c7086'>{}</span>";
-        today = "<span color='#f38ba8'><b><u>{}</u></b></span>";
+        months = "<span color='${colors.base0E}'><b>{}</b></span>";
+        weekdays = "<span color='${colors.base03}'>{}</span>";
+        today = "<span color='${colors.base08}'><b><u>{}</u></b></span>";
       };
     };
   };

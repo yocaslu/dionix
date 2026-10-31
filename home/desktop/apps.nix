@@ -7,9 +7,7 @@
 
   programs.alacritty = {
     enable = true;
-    settings = lib.recursiveUpdate (import ./settings/alacritty.nix) (
-      import ./settings/alacritty-catppuccin-mocha.nix
-    );
+    settings = import ./settings/alacritty.nix;
   };
 
   programs.zathura = {

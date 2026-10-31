@@ -42,6 +42,12 @@ in
     # Só entram os alvos ligados um a um
     autoEnable = false;
     base16Scheme = scheme defaultTheme;
+    targets.alacritty = {
+      enable = true;
+      # Fonte e opacidade continuam em settings/alacritty.nix
+      fonts.enable = false;
+      opacity.enable = false;
+    };
   };
 
   dionix = {
