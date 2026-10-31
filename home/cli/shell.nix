@@ -77,7 +77,7 @@ in
 
     autosuggestion = {
       enable = true;
-      # overlay0 do Catppuccin Mocha
+      # base03 do tema ativo
       highlight = "fg=${config.dionix.colors.base03}";
     };
     syntaxHighlighting.enable = true;

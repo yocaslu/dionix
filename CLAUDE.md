@@ -4,19 +4,20 @@ Guia para o Claude trabalhar neste repositório.
 
 ## O que é
 
-Flake NixOS + Home Manager (NixOS 26.05) de três hosts: `notebook`, `desktop` e `server` (VM Proxmox com Docker). Usuário: `dio`. O ambiente gráfico (SwayFX, Catppuccin Mocha, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
+Flake NixOS + Home Manager (NixOS 26.05) de três hosts: `notebook`, `desktop` e `server` (VM Proxmox com Docker). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
 
 ## Onde mexer
 
 - Papéis do sistema: `modules/nixos/*.nix`. Cada papel importa sua parte do Home Manager (`common.nix` → `home/cli`, `workstation.nix` → `home/desktop`).
 - Hosts: `hosts/<host>/default.nix` só escolhe papéis e boot. O `hardware-configuration.nix` do `desktop` é o real, gerado na máquina (já instalada); os de `notebook` e `server` ainda são provisórios.
 - Configs do usuário: `home/cli` (terminal, todas as máquinas) e `home/desktop` (gráfico).
-- Dados convertidos dos dotfiles ficam em `home/*/settings/*.nix` (attrsets puros); arquivos que não viram Nix (CSS, Lua, scripts, módulos zsh) ficam em `home/*/files/`.
+- Dados convertidos dos dotfiles ficam em `home/*/settings/*.nix` (attrsets, ou funções de `colors` quando usam a paleta); arquivos que não viram Nix (CSS, Lua, scripts, módulos zsh) ficam em `home/*/files/`.
 - Pacotes do unstable: `pkgs.unstable.<nome>` (overlay em `overlays/default.nix`).
 
 ## Convenções
 
-- Mantenha o Catppuccin Mocha (base `#1e1e2e`, surface `#313244`, texto `#cdd6f4`, mauve `#cba6f7`, vermelho `#f38ba8`), atalhos estilo Vim e o visual TUI (cantos retos, bordas de 1px).
+- Mantenha os atalhos estilo Vim e o visual TUI (cantos retos, bordas de 1px).
+- Cores não ficam fixas: os temas estão em `home/desktop/themes.nix` (Stylix, trocados pelo comando `theme`). Novas configs leem `config.dionix.colors` ou passam o texto por `config.dionix.render` (tokens `@base00@`, `@base00-hex@`, `@base00-rgb@`). O padrão, usado também no `server`, é o Catppuccin Mocha (`home/cli/colors.nix`).
 - Comentários em português.
 - Serviços gráficos usam `wayland.systemd.target = "sway-session.target"` para não subirem no XFCE.
 - Todo alias ou função novo do zsh precisa de uma seção `## nome` em `home/cli/files/zsh/commands.md` (lido pelo `cmds`).
@@ -28,6 +29,7 @@ Flake NixOS + Home Manager (NixOS 26.05) de três hosts: `notebook`, `desktop` e
 nix flake check                                                        # avalia os 3 hosts
 nix build .#nixosConfigurations.notebook.config.home-manager.users.dio.home-files   # valida a config do Sway e roda o shellcheck nos scripts
 nix build .#nixosConfigurations.<host>.config.system.build.toplevel    # build completo
+nix build .#checks.x86_64-linux.theme-script                           # testes do comando theme
 ```
 
 ## Cuidados

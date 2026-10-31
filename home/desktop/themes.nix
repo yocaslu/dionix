@@ -65,6 +65,8 @@ in
 
   # O tema do Stylix substitui o flavor usado no servidor
   programs.yazi.theme.flavor = lib.mkForce { };
+  # O delta usa os mesmos temas do bat
+  programs.delta.options.syntax-theme = lib.mkForce "base16-stylix";
 
   dionix = {
     theme = defaultTheme;
