@@ -1,21 +1,21 @@
-/* swaync - visual TUI com Catppuccin Mocha (igual à Waybar e ao Sway)
+/* swaync - visual TUI com cores do tema ativo (igual à Waybar e ao Sway)
  * Reaproveita o tema padrão e só troca as variáveis de cor e os cantos.
  */
 @import url("file:///etc/xdg/swaync/style.css");
 
 :root {
-  --cc-bg: #1e1e2e;
-  --noti-border-color: #45475a;
-  --noti-bg: 30, 30, 46;
+  --cc-bg: @base00@;
+  --noti-border-color: @base02@;
+  --noti-bg: @base00-rgb@;
   --noti-bg-alpha: 1;
-  --noti-bg-darker: #181825;
-  --noti-bg-hover: #313244;
-  --noti-bg-focus: #313244;
-  --noti-close-bg: #313244;
-  --noti-close-bg-hover: #f38ba8;
-  --text-color: #cdd6f4;
-  --text-color-disabled: #6c7086;
-  --bg-selected: #cba6f7;
+  --noti-bg-darker: @base00@;
+  --noti-bg-hover: @base01@;
+  --noti-bg-focus: @base01@;
+  --noti-close-bg: @base01@;
+  --noti-close-bg-hover: @base08@;
+  --text-color: @base05@;
+  --text-color-disabled: @base03@;
+  --bg-selected: @base0E@;
   --border: 1px solid var(--noti-border-color);
   --border-radius: 0;
   --notification-shadow: none;
@@ -32,48 +32,48 @@
 }
 
 .close-button:hover {
-  color: #1e1e2e;
+  color: @base00@;
 }
 
 .control-center {
-  border: 1px solid #cba6f7;
+  border: 1px solid @base0E@;
 }
 
 /* Urgência: borda colorida, como os estados da Waybar */
 .notification-row .notification-background .notification.critical {
-  border: 1px solid #f38ba8;
+  border: 1px solid @base08@;
 }
 
 .notification-row .notification-background .notification.low {
-  border: 1px solid #313244;
+  border: 1px solid @base01@;
 }
 
 .notification-row .notification-background .notification .notification-default-action .notification-content .text-box .summary {
-  color: #cba6f7;
+  color: @base0E@;
 }
 
 .notification-row .notification-background .notification .notification-default-action .notification-content .text-box .time {
-  color: #6c7086;
+  color: @base03@;
 }
 
 /* Título e botões em vídeo invertido */
 .widget-title > label {
-  color: #cba6f7;
+  color: @base0E@;
   font-weight: bold;
 }
 
 .widget-title > button,
 .notification-row .notification-background .notification .notification-action > button {
   border-radius: 0;
-  border: 1px solid #45475a;
+  border: 1px solid @base02@;
   background: transparent;
-  color: #cdd6f4;
+  color: @base05@;
 }
 
 .widget-title > button:hover,
 .notification-row .notification-background .notification .notification-action > button:hover {
-  background: #cba6f7;
-  color: #1e1e2e;
+  background: @base0E@;
+  color: @base00@;
 }
 
 .widget-dnd switch {
@@ -85,7 +85,7 @@
 }
 
 .widget-dnd switch:checked {
-  background: #cba6f7;
+  background: @base0E@;
 }
 
 .widget-mpris .widget-mpris-player {

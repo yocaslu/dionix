@@ -86,6 +86,9 @@
   };
   services.fstrim.enable = true;
 
+  # O wrapper com capabilities deixa o mtr rodar sem sudo
+  programs.mtr.enable = true;
+
   environment.systemPackages = with pkgs; [
     git
     curl
@@ -101,6 +104,12 @@
     nmap
     traceroute
     ethtool
+    iperf3
+    tcpdump
+    whois
+    socat
+    netcat-openbsd
+    bandwhich
     smartmontools
     glances
   ];

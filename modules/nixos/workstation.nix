@@ -3,11 +3,23 @@
 # A parte do usuário (configs do Sway, Waybar, tema…) fica em home/desktop.
 {
   config,
+  inputs,
   pkgs,
   username,
   ...
 }:
 {
+  imports = [ inputs.stylix.nixosModules.stylix ];
+
+  # Sem alvos no sistema: o tema fica no Home Manager (home/desktop/themes.nix),
+  # e o tuigreet e o XFCE não mudam
+  stylix = {
+    enable = true;
+    autoEnable = false;
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+    homeManagerIntegration.followSystem = false;
+  };
+
   # Sessões gráficas -------------------------------------------------------
 
   # SwayFX (Sway com blur, sombras e escurecimento). O Home Manager gera a
@@ -95,9 +107,26 @@
   # Binários genéricos baixados da internet (ex.: extensões, toolchains)
   programs.nix-ld.enable = true;
 
+  # O rust-analyzer precisa do código da std para completar e navegar nela
+  environment.sessionVariables.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+
   environment.systemPackages = with pkgs; [
     distrobox
     wl-clipboard
+    # Rust (o gcc é o linker usado pelo cargo)
+    rustc
+    cargo
+    clippy
+    rustfmt
+    rust-analyzer
+    gcc
+    # Go
+    go
+    gopls
+    # Python
+    uv
+    ruff
+    pyright
   ];
 
   home-manager.users.${username}.imports = [ ../../home/desktop ];

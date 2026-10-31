@@ -1,4 +1,8 @@
 # Convertido de dot_config/fuzzel/fuzzel.ini (yocaslu/dotfiles)
+colors:
+let
+  noHash = builtins.substring 1 6;
+in
 {
   main = {
     font = "JetBrainsMono Nerd Font:size=12";
@@ -17,18 +21,18 @@
     line-height = "20";
   };
   colors = {
-    background = "1e1e2ee6";
-    text = "cdd6f4ff";
-    message = "a6adc8ff";
-    prompt = "cba6f7ff";
-    placeholder = "6c7086ff";
-    input = "cdd6f4ff";
-    match = "cba6f7ff";
-    selection = "cba6f7ff";
-    selection-text = "1e1e2eff";
-    selection-match = "1e1e2eff";
-    counter = "6c7086ff";
-    border = "cba6f7ff";
+    background = "${noHash colors.base00}e6";
+    text = "${noHash colors.base05}ff";
+    message = "${noHash colors.base04}ff";
+    prompt = "${noHash colors.base0E}ff";
+    placeholder = "${noHash colors.base03}ff";
+    input = "${noHash colors.base05}ff";
+    match = "${noHash colors.base0E}ff";
+    selection = "${noHash colors.base0E}ff";
+    selection-text = "${noHash colors.base00}ff";
+    selection-match = "${noHash colors.base00}ff";
+    counter = "${noHash colors.base03}ff";
+    border = "${noHash colors.base0E}ff";
   };
   border = {
     width = "1";

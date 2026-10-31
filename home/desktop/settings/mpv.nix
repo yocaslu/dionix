@@ -1,12 +1,12 @@
 # Convertido de dot_config/mpv/mpv.conf (yocaslu/dotfiles)
-{
+colors: {
   hwdec = "auto-safe";
   keep-open = "yes";
   osd-font = "JetBrainsMono Nerd Font";
   osd-font-size = 28;
-  osd-color = "#cdd6f4";
-  osd-border-color = "#1e1e2e";
+  osd-color = "${colors.base05}";
+  osd-border-color = "${colors.base00}";
   osd-bar-align-y = 0.9;
-  sub-color = "#cdd6f4";
-  sub-border-color = "#1e1e2e";
+  sub-color = "${colors.base05}";
+  sub-border-color = "${colors.base00}";
 }

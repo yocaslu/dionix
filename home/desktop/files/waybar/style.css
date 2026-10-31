@@ -1,10 +1,5 @@
-/* Waybar - visual TUI com Catppuccin Mocha
+/* Waybar - visual TUI com as cores do tema ativo
  * Caixas de 1px com cantos retos, texto monoespaçado e vídeo invertido para destaque.
- *
- * base #1e1e2e  surface0 #313244  surface1 #45475a  overlay0 #6c7086
- * text #cdd6f4  subtext0 #a6adc8  mauve #cba6f7     red #f38ba8
- * peach #fab387 yellow #f9e2af    green #a6e3a1     teal #94e2d5
- * sky #89dceb   sapphire #74c7ec  blue #89b4fa      lavender #b4befe
  */
 
 * {
@@ -18,9 +13,9 @@
 
 window#waybar {
     /* Levemente translúcida para o blur do SwayFX (layer_effects) */
-    background-color: rgba(30, 30, 46, 0.85);
-    border-top: 1px solid #45475a;
-    color: #cdd6f4;
+    background-color: rgba(@base00-rgb@, 0.85);
+    border-top: 1px solid @base02@;
+    color: @base05@;
 }
 
 .modules-left {
@@ -54,7 +49,7 @@ window#waybar {
 #tray,
 #custom-power {
     background-color: transparent;
-    border: 1px solid #45475a;
+    border: 1px solid @base02@;
     padding: 0 8px;
     margin: 4px 0;
 }
@@ -66,61 +61,61 @@ window#waybar {
 
 #workspaces button {
     padding: 0 8px;
-    color: #6c7086;
+    color: @base03@;
     background: transparent;
     box-shadow: none;
     text-shadow: none;
 }
 
 #workspaces button.visible {
-    color: #cdd6f4;
+    color: @base05@;
 }
 
 #workspaces button.focused {
-    background-color: #cba6f7;
-    color: #1e1e2e;
+    background-color: @base0E@;
+    color: @base00@;
     font-weight: bold;
 }
 
 #workspaces button.urgent {
-    background-color: #f38ba8;
-    color: #1e1e2e;
+    background-color: @base08@;
+    color: @base00@;
 }
 
 #workspaces button:hover {
-    background-color: #313244;
-    color: #cdd6f4;
+    background-color: @base01@;
+    color: @base05@;
 }
 
 #mode {
-    background-color: #fab387;
-    border-color: #fab387;
-    color: #1e1e2e;
+    background-color: @base09@;
+    border-color: @base09@;
+    color: @base00@;
     font-weight: bold;
 }
 
 #window {
-    color: #a6adc8;
+    color: @base04@;
 }
 
 /* Cor de cada módulo (o rótulo herda esta cor, esmaecida) */
-#scratchpad            { color: #b4befe; }
-#mpd                   { color: #a6e3a1; }
-#idle_inhibitor        { color: #6c7086; }
-#pulseaudio            { color: #89b4fa; }
-#bluetooth             { color: #74c7ec; }
-#network               { color: #94e2d5; }
-#power-profiles-daemon { color: #f9e2af; }
-#temperature           { color: #fab387; }
-#backlight             { color: #f9e2af; }
-#language              { color: #b4befe; }
-#battery               { color: #a6e3a1; }
-#custom-notification   { color: #6c7086; }
-#custom-power          { color: #f38ba8; }
-#custom-sys            { color: #9399b2; }
-#custom-cava           { color: #cba6f7; }
-#custom-updates        { color: #fab387; }
-#custom-weather        { color: #89dceb; }
+#scratchpad            { color: @base07@; }
+#mpd                   { color: @base0B@; }
+#idle_inhibitor        { color: @base03@; }
+#pulseaudio            { color: @base0D@; }
+#bluetooth             { color: @base0C@; }
+#network               { color: @base0C@; }
+#power-profiles-daemon { color: @base0A@; }
+#temperature           { color: @base09@; }
+#backlight             { color: @base0A@; }
+#language              { color: @base07@; }
+#battery               { color: @base0B@; }
+#custom-notification   { color: @base03@; }
+#custom-power          { color: @base08@; }
+#custom-sys            { color: @base04@; }
+#custom-cava           { color: @base0E@; }
+#custom-updates        { color: @base09@; }
+#custom-weather        { color: @base0C@; }
 
 /* Gaveta "sys": os módulos escondidos ganham um espaço entre si */
 #sys .drawer-child {
@@ -128,36 +123,36 @@ window#waybar {
 }
 
 #custom-power:hover {
-    background-color: #f38ba8;
-    border-color: #f38ba8;
-    color: #1e1e2e;
+    background-color: @base08@;
+    border-color: @base08@;
+    color: @base00@;
 }
 
 /* Notificações pendentes acendem o módulo; "não perturbe" fica em peach */
 #custom-notification.notification,
 #custom-notification.inhibited-notification {
-    color: #cba6f7;
-    border-color: #cba6f7;
+    color: @base0E@;
+    border-color: @base0E@;
 }
 
 #custom-notification.dnd-none,
 #custom-notification.dnd-notification,
 #custom-notification.dnd-inhibited-none,
 #custom-notification.dnd-inhibited-notification {
-    color: #fab387;
+    color: @base09@;
 }
 
 #clock {
-    background-color: #cba6f7;
-    border-color: #cba6f7;
-    color: #1e1e2e;
+    background-color: @base0E@;
+    border-color: @base0E@;
+    color: @base00@;
     font-weight: bold;
 }
 
 /* Estados */
 #idle_inhibitor.activated {
-    color: #f9e2af;
-    border-color: #f9e2af;
+    color: @base0A@;
+    border-color: @base0A@;
 }
 
 #pulseaudio.muted,
@@ -165,37 +160,37 @@ window#waybar {
 #bluetooth.off,
 #mpd.disconnected,
 #mpd.stopped {
-    color: #6c7086;
+    color: @base03@;
 }
 
 #network.disconnected {
-    color: #f38ba8;
-    border-color: #f38ba8;
+    color: @base08@;
+    border-color: @base08@;
 }
 
 #power-profiles-daemon.performance {
-    color: #f38ba8;
+    color: @base08@;
 }
 
 #power-profiles-daemon.power-saver {
-    color: #a6e3a1;
+    color: @base0B@;
 }
 
 #battery.charging,
 #battery.plugged {
-    border-color: #a6e3a1;
+    border-color: @base0B@;
 }
 
 #battery.warning:not(.charging),
 #temperature.warning {
-    color: #f9e2af;
-    border-color: #f9e2af;
+    color: @base0A@;
+    border-color: @base0A@;
 }
 
 #battery.critical:not(.charging),
 #temperature.critical {
-    color: #f38ba8;
-    border-color: #f38ba8;
+    color: @base08@;
+    border-color: @base08@;
     animation-name: blink;
     animation-duration: 0.5s;
     animation-timing-function: steps(2);
@@ -205,21 +200,21 @@ window#waybar {
 
 @keyframes blink {
     to {
-        background-color: #f38ba8;
-        color: #1e1e2e;
+        background-color: @base08@;
+        color: @base00@;
     }
 }
 
 #tray > .needs-attention {
-    background-color: #f38ba8;
+    background-color: @base08@;
 }
 
 /* Tooltips no mesmo estilo de caixa */
 tooltip {
-    background-color: #1e1e2e;
-    border: 1px solid #cba6f7;
+    background-color: @base00@;
+    border: 1px solid @base0E@;
 }
 
 tooltip label {
-    color: #cdd6f4;
+    color: @base05@;
 }

@@ -1,30 +1,33 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
 # (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
-# Zed), senhas (rbw) e os apps padrão
-{ lib, pkgs, ... }:
+# Zed), senhas (rbw), música (spotify_player) e os apps padrão
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   programs.firefox.enable = true;
 
   programs.alacritty = {
     enable = true;
-    settings = lib.recursiveUpdate (import ./settings/alacritty.nix) (
-      import ./settings/alacritty-catppuccin-mocha.nix
-    );
+    settings = import ./settings/alacritty.nix;
   };
 
   programs.zathura = {
     enable = true;
-    extraConfig = builtins.readFile ./files/zathura/zathurarc;
+    extraConfig = config.dionix.render (builtins.readFile ./files/zathura/zathurarc);
   };
 
   programs.imv = {
     enable = true;
-    settings = import ./settings/imv.nix;
+    settings = import ./settings/imv.nix config.dionix.colors;
   };
 
   programs.mpv = {
     enable = true;
-    config = import ./settings/mpv.nix;
+    config = import ./settings/mpv.nix config.dionix.colors;
     bindings = import ./settings/mpv-bindings.nix;
   };
 
@@ -32,6 +35,8 @@
     enable = true;
     settings = import ./settings/swappy.nix;
   };
+
+  programs.spotify-player.enable = true;
 
   home.packages = with pkgs; [
     grim

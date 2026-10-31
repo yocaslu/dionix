@@ -1,6 +1,37 @@
 # tmux com prefixo Ctrl+s e plugins do nixpkgs (antes instalados pelo TPM)
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 let
+  c = config.dionix.colors;
+  # Cores do tema ativo para o plugin catppuccin
+  thmColors = ''
+    set -g @thm_bg "${c.base00}"
+    set -g @thm_fg "${c.base05}"
+    set -g @thm_rosewater "${c.base06}"
+    set -g @thm_flamingo "${c.base0F}"
+    set -g @thm_pink "${c.base0E}"
+    set -g @thm_mauve "${c.base0E}"
+    set -g @thm_red "${c.base08}"
+    set -g @thm_maroon "${c.base08}"
+    set -g @thm_peach "${c.base09}"
+    set -g @thm_yellow "${c.base0A}"
+    set -g @thm_green "${c.base0B}"
+    set -g @thm_teal "${c.base0C}"
+    set -g @thm_sky "${c.base0C}"
+    set -g @thm_sapphire "${c.base0C}"
+    set -g @thm_blue "${c.base0D}"
+    set -g @thm_lavender "${c.base07}"
+    set -g @thm_subtext_1 "${c.base04}"
+    set -g @thm_subtext_0 "${c.base04}"
+    set -g @thm_overlay_2 "${c.base04}"
+    set -g @thm_overlay_1 "${c.base03}"
+    set -g @thm_overlay_0 "${c.base03}"
+    set -g @thm_surface_2 "${c.base02}"
+    set -g @thm_surface_1 "${c.base02}"
+    set -g @thm_surface_0 "${c.base01}"
+    set -g @thm_mantle "${c.base00}"
+    set -g @thm_crust "${c.base00}"
+  '';
+
   # prefix + f: escolhe um projeto em ~/repos e abre/troca para a sessão dele
   tmux-sessionizer = pkgs.writeShellApplication {
     name = "tmux-sessionizer";
@@ -30,7 +61,9 @@ in
     plugins = with pkgs.tmuxPlugins; [
       {
         plugin = catppuccin;
+        # O tema do plugin só define o que ainda não existe (set -o)
         extraConfig = ''
+          ${thmColors}
           set -g @catppuccin_window_left_separator ""
           set -g @catppuccin_window_right_separator " "
           set -g @catppuccin_window_middle_separator " █"

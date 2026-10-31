@@ -1,11 +1,11 @@
-/* SwayOSD - visual TUI com Catppuccin Mocha (igual à Waybar e ao Sway)
+/* SwayOSD - visual TUI com cores do tema ativo (igual à Waybar e ao Sway)
  * Baseado em https://github.com/ErikReider/SwayOSD/blob/main/data/style/style.scss
  */
 
 window#osd {
   border-radius: 0;
-  border: 1px solid #cba6f7;
-  background: rgba(30, 30, 46, 0.95);
+  border: 1px solid @base0E@;
+  background: rgba(@base00-rgb@, 0.95);
 }
 
 window#osd #container {
@@ -14,7 +14,7 @@ window#osd #container {
 
 window#osd image,
 window#osd label {
-  color: #cdd6f4;
+  color: @base05@;
   font-family: "JetBrainsMono Nerd Font", monospace;
 }
 
@@ -36,7 +36,7 @@ window#osd segment {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #313244;
+  background: @base01@;
 }
 
 window#osd progress,
@@ -44,7 +44,7 @@ window#osd segment.active {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #cba6f7;
+  background: @base0E@;
 }
 
 window#osd segment {

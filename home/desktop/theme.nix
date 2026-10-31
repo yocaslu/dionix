@@ -1,12 +1,17 @@
-# Tema: adw-gtk3 com cores Catppuccin, Kvantum Catppuccin no Qt, ícones
+# Tema: adw-gtk3 com as cores do tema ativo, Kvantum Catppuccin no Qt, ícones
 # Papirus (pastas mauve), cursor Catppuccin Mocha Mauve e JetBrainsMono Nerd Font.
 # Substitui o nwg-look/qt6ct manuais, o papirus-folders e o gsettings do Sway.
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cursor = "catppuccin-mocha-mauve-cursors";
   iconTheme = "Papirus-Dark";
   font = "JetBrainsMono Nerd Font";
-  catppuccinCss = builtins.readFile ./files/gtk/catppuccin.css;
+  themeCss = config.dionix.render (builtins.readFile ./files/gtk/theme.css);
 
   kvantumTheme = "catppuccin-mocha-mauve";
   kvantum = pkgs.catppuccin-kvantum.override {
@@ -43,12 +48,12 @@ in
     };
     gtk3 = {
       extraConfig.gtk-application-prefer-dark-theme = 1;
-      extraCss = catppuccinCss;
+      extraCss = themeCss;
     };
     gtk4 = {
       theme = null;
       extraConfig.gtk-application-prefer-dark-theme = 1;
-      extraCss = catppuccinCss;
+      extraCss = themeCss;
     };
   };
 

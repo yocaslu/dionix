@@ -4,7 +4,7 @@
 
 (( $+commands[fzf] )) || return 0
 
-# FZF_DEFAULT_COMMAND, FZF_DEFAULT_OPTS (cores Catppuccin) e os previews do
+# FZF_DEFAULT_COMMAND, FZF_DEFAULT_OPTS, FZF_DEFAULT_OPTS_FILE (cores do tema ativo) e os previews do
 # Ctrl+T / Alt+C vêm do programs.fzf do Home Manager (home/cli/shell.nix).
 
 # fe [busca]: escolhe um ou mais arquivos (Tab marca) e abre no $EDITOR

@@ -1,9 +1,13 @@
 # Convertido de dot_config/wlr-which-key/config.yaml (yocaslu/dotfiles)
+colors:
+let
+  noHash = builtins.substring 1 6;
+in
 {
   font = "JetBrainsMono Nerd Font 12";
-  background = "#1e1e2ee6";
-  color = "#cdd6f4";
-  border = "#cba6f7";
+  background = "${colors.base00}e6";
+  color = "${colors.base05}";
+  border = "${colors.base0E}";
   separator = " ❯ ";
   border_width = 1;
   corner_r = 0;
@@ -22,7 +26,7 @@
         {
           key = "a";
           desc = "área + anotar";
-          cmd = "grim -g \"$(slurp -d -b 1e1e2e66 -c cba6f7ff -s 00000000 -w 1)\" - | swappy -f -";
+          cmd = "grim -g \"$(slurp -d -b ${noHash colors.base00}66 -c ${noHash colors.base0E}ff -s 00000000 -w 1)\" - | swappy -f -";
         }
         {
           key = "t";
@@ -32,7 +36,7 @@
         {
           key = "c";
           desc = "área → clipboard";
-          cmd = "grim -g \"$(slurp -d -b 1e1e2e66 -c cba6f7ff -s 00000000 -w 1)\" - | wl-copy";
+          cmd = "grim -g \"$(slurp -d -b ${noHash colors.base00}66 -c ${noHash colors.base0E}ff -s 00000000 -w 1)\" - | wl-copy";
         }
       ];
     }
@@ -191,6 +195,11 @@
           cmd = "qt6ct";
         }
       ];
+    }
+    {
+      key = "m";
+      desc = "tema";
+      cmd = "theme";
     }
     {
       key = "w";
