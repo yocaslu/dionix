@@ -193,6 +193,11 @@
       ];
     }
     {
+      key = "m";
+      desc = "tema";
+      cmd = "theme";
+    }
+    {
       key = "w";
       desc = "papel de parede";
       cmd = "dir=\"$HOME/Pictures/Wallpapers\"; img=$(find \"$dir\" -path '*/.*' -prune -o -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.gif' \\) -printf '%P\\n' | sort | fuzzel --dmenu --prompt \"wall ❯ \") && ln -sf \"$dir/$img\" \"$dir/.current\" && awww img \"$dir/.current\" --transition-type grow";

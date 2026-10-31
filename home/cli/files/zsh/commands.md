@@ -193,6 +193,12 @@ Atualiza o `flake.lock` e aplica a nova configuração (`nh os switch --update`)
 ## rebuild
 Aplica a configuração do dionix sem atualizar o `flake.lock` (`nh os switch`).
 
+## theme
+Troca a paleta de cores sem rebuild (só em notebook e desktop).
+
+Uso: `theme` abre o menu (também em Super+x m) · `theme nord` aplica direto.
+Temas: `catppuccin-mocha`, `gruvbox-dark-medium`, `nord`, `tokyo-night-dark`.
+
 ## wall
 Troca o papel de parede (awww) com transição.
 

@@ -71,11 +71,19 @@
       formatter.${system} = pkgs.nixfmt-tree;
 
       # `nix flake check` avalia os três hosts por completo (sem compilar nada)
-      checks.${system} = nixpkgs.lib.mapAttrs (
-        name: host:
-        pkgs.writeText "${name}-toplevel" (
-          builtins.unsafeDiscardStringContext host.config.system.build.toplevel.drvPath
-        )
-      ) self.nixosConfigurations;
+      checks.${system} =
+        nixpkgs.lib.mapAttrs (
+          name: host:
+          pkgs.writeText "${name}-toplevel" (
+            builtins.unsafeDiscardStringContext host.config.system.build.toplevel.drvPath
+          )
+        ) self.nixosConfigurations
+        // {
+          # Testes do comando `theme`
+          theme-script = pkgs.runCommand "theme-script-test" { } ''
+            bash ${./home/desktop/files/theme/theme-test.sh} ${./home/desktop/files/theme/theme.sh}
+            touch $out
+          '';
+        };
     };
 }

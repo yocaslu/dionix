@@ -16,8 +16,27 @@ let
     tokyo-night-dark = "tokyonight";
   };
   scheme = name: "${pkgs.base16-schemes}/share/themes/${name}.yaml";
+
+  themeCommand = pkgs.writeShellApplication {
+    name = "theme";
+    runtimeInputs = [ pkgs.coreutils ];
+    runtimeEnv = {
+      DIONIX_THEMES = lib.concatStringsSep " " (builtins.attrNames themes);
+      DIONIX_DEFAULT_THEME = defaultTheme;
+    };
+    text = builtins.readFile ./files/theme/theme.sh;
+  };
 in
 {
+  home.packages = [ themeCommand ];
+
+  # Só na base: as specialisations não têm specialisations e não reaplicam
+  home.activation = lib.mkIf (config.specialisation != { }) {
+    dionixReapplyTheme = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+      run ${themeCommand}/bin/theme --reapply "$newGenPath"
+    '';
+  };
+
   stylix = {
     enable = true;
     # Só entram os alvos ligados um a um
