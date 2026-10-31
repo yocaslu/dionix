@@ -53,6 +53,14 @@ alterar a tela de login nem o XFCE.
 O módulo do Stylix para o Waybar não é usado no lugar do CSS atual, para
 preservar o layout. O mesmo vale para o swaync.
 
+Os arquivos não leem `config.lib.stylix.colors` diretamente, porque `home/cli`
+também roda no `server`, que não tem Stylix. Eles leem a opção `dionix.colors`:
+o padrão é o Catppuccin Mocha, e `home/desktop` a preenche com a paleta do Stylix.
+
+Também recebem as cores por template: Sway, wlr-which-key, fuzzel, swaylock,
+swaynag e o CSS do GTK. Sem tema próprio ficam VS Code, Zed e Firefox, cujo
+visual continua fora do Nix, e o Kvantum, que segue em Catppuccin.
+
 ### Comando `theme`
 
 - `theme` sem argumento abre a lista no fuzzel. `theme <nome>` aplica direto.
