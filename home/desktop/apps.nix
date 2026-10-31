@@ -1,6 +1,6 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
 # (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
-# Zed), senhas (rbw) e os apps padrão
+# Zed), senhas (rbw), música (spotify_player) e os apps padrão
 { lib, pkgs, ... }:
 {
   programs.firefox.enable = true;
@@ -32,6 +32,11 @@
     enable = true;
     settings = import ./settings/swappy.nix;
   };
+
+  programs.spotify-player = {
+    enable = true;
+  }
+  // import ./settings/spotify-player.nix;
 
   home.packages = with pkgs; [
     grim
