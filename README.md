@@ -23,6 +23,7 @@ modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
+  desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
   docker-host.nix          Docker, limpeza automática, oci-containers
   proxmox-vm.nix           agente QEMU, console serial, GRUB
 home/

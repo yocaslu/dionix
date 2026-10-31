@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/common.nix
     ../../modules/nixos/workstation.nix
+    ../../modules/nixos/desktop.nix
   ];
 
   boot.loader = {
