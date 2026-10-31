@@ -9,7 +9,7 @@ Flake NixOS + Home Manager (NixOS 26.05) de três hosts: `notebook`, `desktop` e
 ## Onde mexer
 
 - Papéis do sistema: `modules/nixos/*.nix`. Cada papel importa sua parte do Home Manager (`common.nix` → `home/cli`, `workstation.nix` → `home/desktop`).
-- Hosts: `hosts/<host>/default.nix` só escolhe papéis e boot. Os `hardware-configuration.nix` do repositório são provisórios.
+- Hosts: `hosts/<host>/default.nix` só escolhe papéis e boot. O `hardware-configuration.nix` do `desktop` é o real, gerado na máquina (já instalada); os de `notebook` e `server` ainda são provisórios.
 - Configs do usuário: `home/cli` (terminal, todas as máquinas) e `home/desktop` (gráfico).
 - Dados convertidos dos dotfiles ficam em `home/*/settings/*.nix` (attrsets puros); arquivos que não viram Nix (CSS, Lua, scripts, módulos zsh) ficam em `home/*/files/`.
 - Pacotes do unstable: `pkgs.unstable.<nome>` (overlay em `overlays/default.nix`).
