@@ -1,6 +1,5 @@
 # Convertido de dot_config/helix/config.toml (yocaslu/dotfiles)
 {
-  theme = "catppuccin_mocha";
   editor = {
     cursorline = true;
     bufferline = "always";

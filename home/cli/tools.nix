@@ -1,5 +1,11 @@
 # Utilitários de terminal (antes em .chezmoidata/packages.yaml) e suas configs
-{ pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   home.packages = with pkgs; [
     # Substitutos modernos usados pelos aliases (ls→eza, du→dust, df→duf…)
@@ -21,9 +27,9 @@
 
   programs.bat = {
     enable = true;
-    # O bat do nixpkgs já traz o Catppuccin Mocha embutido
+    # O bat do nixpkgs já traz o Catppuccin Mocha embutido; com Stylix, vale o tema dele
     config = {
-      theme = "Catppuccin Mocha";
+      theme = lib.mkDefault "Catppuccin Mocha";
       style = "numbers,changes,header";
     };
   };
@@ -31,7 +37,7 @@
   programs.btop = {
     enable = true;
     settings = {
-      color_theme = "catppuccin_mocha";
+      color_theme = lib.mkDefault "catppuccin_mocha";
       theme_background = false;
       truecolor = true;
       rounded_corners = false;
@@ -48,8 +54,8 @@
     enableBashIntegration = false;
     flavors.catppuccin-mocha = "${inputs.yazi-flavors}/catppuccin-mocha.yazi";
     theme.flavor = {
-      dark = "catppuccin-mocha";
-      light = "catppuccin-mocha";
+      dark = lib.mkDefault "catppuccin-mocha";
+      light = lib.mkDefault "catppuccin-mocha";
     };
     extraPackages = with pkgs; [
       ffmpegthumbnailer
@@ -66,7 +72,7 @@
   programs.lsd = {
     enable = true;
     settings = import ./settings/lsd.nix;
-    colors = import ./settings/lsd-colors.nix;
+    colors = import ./settings/lsd-colors.nix config.dionix.colors;
     icons = import ./settings/lsd-icons.nix;
   };
 }

@@ -1,5 +1,5 @@
 # Editores: Neovim (NvChad), Helix e Vim.
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   # Neovim baseado no NvChad v2.5. O lazy.nvim continua baixando os plugins,
   # mas os LSPs, formatadores e o compilador do treesitter vêm do Nix: os
@@ -37,7 +37,9 @@
 
   programs.helix = {
     enable = true;
-    settings = import ./settings/helix.nix;
+    settings = import ./settings/helix.nix // {
+      theme = lib.mkDefault "catppuccin_mocha";
+    };
     languages = import ./settings/helix-languages.nix;
     extraPackages = with pkgs; [
       pyright

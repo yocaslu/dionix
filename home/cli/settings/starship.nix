@@ -1,9 +1,9 @@
 # Convertido de dot_config/starship/starship.toml (yocaslu/dotfiles)
-{
+colors: {
   "$schema" = "https://starship.rs/config-schema.json";
   format = "$directory$git_branch$git_status$cmd_duration$status$line_break$character";
   add_newline = true;
-  palette = "catppuccin_mocha";
+  palette = "tema";
   directory = {
     style = "bold mauve";
     truncation_length = 3;
@@ -34,33 +34,33 @@
     vimcmd_symbol = "[❮](green)";
   };
   palettes = {
-    catppuccin_mocha = {
-      rosewater = "#f5e0dc";
-      flamingo = "#f2cdcd";
-      pink = "#f5c2e7";
-      mauve = "#cba6f7";
-      red = "#f38ba8";
-      maroon = "#eba0ac";
-      peach = "#fab387";
-      yellow = "#f9e2af";
-      green = "#a6e3a1";
-      teal = "#94e2d5";
-      sky = "#89dceb";
-      sapphire = "#74c7ec";
-      blue = "#89b4fa";
-      lavender = "#b4befe";
-      text = "#cdd6f4";
-      subtext1 = "#bac2de";
-      subtext0 = "#a6adc8";
-      overlay2 = "#9399b2";
-      overlay1 = "#7f849c";
-      overlay0 = "#6c7086";
-      surface2 = "#585b70";
-      surface1 = "#45475a";
-      surface0 = "#313244";
-      base = "#1e1e2e";
-      mantle = "#181825";
-      crust = "#11111b";
+    tema = {
+      rosewater = "${colors.base06}";
+      flamingo = "${colors.base0F}";
+      pink = "${colors.base0E}";
+      mauve = "${colors.base0E}";
+      red = "${colors.base08}";
+      maroon = "${colors.base08}";
+      peach = "${colors.base09}";
+      yellow = "${colors.base0A}";
+      green = "${colors.base0B}";
+      teal = "${colors.base0C}";
+      sky = "${colors.base0C}";
+      sapphire = "${colors.base0C}";
+      blue = "${colors.base0D}";
+      lavender = "${colors.base07}";
+      text = "${colors.base05}";
+      subtext1 = "${colors.base04}";
+      subtext0 = "${colors.base04}";
+      overlay2 = "${colors.base04}";
+      overlay1 = "${colors.base03}";
+      overlay0 = "${colors.base03}";
+      surface2 = "${colors.base02}";
+      surface1 = "${colors.base02}";
+      surface0 = "${colors.base01}";
+      base = "${colors.base00}";
+      mantle = "${colors.base00}";
+      crust = "${colors.base00}";
     };
   };
 }

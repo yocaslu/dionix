@@ -1,47 +1,47 @@
 # Convertido de dot_config/lsd/colors.yaml (yocaslu/dotfiles)
-{
-  user = "#c6a0f6";
-  group = "#b7bdf8";
+colors: {
+  user = "${colors.base0E}";
+  group = "${colors.base07}";
   permission = {
-    read = "#a6da95";
-    write = "#eed49f";
-    exec = "#ee99a0";
-    exec-sticky = "#c6a0f6";
-    no-access = "#a5adcb";
-    octal = "#8bd5ca";
-    acl = "#8bd5ca";
-    context = "#91d7e3";
+    read = "${colors.base0B}";
+    write = "${colors.base0A}";
+    exec = "${colors.base08}";
+    exec-sticky = "${colors.base0E}";
+    no-access = "${colors.base04}";
+    octal = "${colors.base0C}";
+    acl = "${colors.base0C}";
+    context = "${colors.base0C}";
   };
   date = {
-    hour-old = "#8bd5ca";
-    day-old = "#91d7e3";
-    older = "#7dc4e4";
+    hour-old = "${colors.base0C}";
+    day-old = "${colors.base0C}";
+    older = "${colors.base0C}";
   };
   size = {
-    none = "#a5adcb";
-    small = "#a6da95";
-    medium = "#eed49f";
-    large = "#f5a97f";
+    none = "${colors.base04}";
+    small = "${colors.base0B}";
+    medium = "${colors.base0A}";
+    large = "${colors.base09}";
   };
   inode = {
-    valid = "#f5bde6";
-    invalid = "#a5adcb";
+    valid = "${colors.base0E}";
+    invalid = "${colors.base04}";
   };
   links = {
-    valid = "#f5bde6";
-    invalid = "#a5adcb";
+    valid = "${colors.base0E}";
+    invalid = "${colors.base04}";
   };
-  tree-edge = "#b8c0e0";
+  tree-edge = "${colors.base04}";
   git-status = {
-    default = "#cad3f5";
-    unmodified = "#a5adcb";
-    ignored = "#a5adcb";
-    new-in-index = "#a6da95";
-    new-in-workdir = "#a6da95";
-    typechange = "#eed49f";
-    deleted = "#ed8796";
-    renamed = "#a6da95";
-    modified = "#eed49f";
-    conflicted = "#ed8796";
+    default = "${colors.base05}";
+    unmodified = "${colors.base04}";
+    ignored = "${colors.base04}";
+    new-in-index = "${colors.base0B}";
+    new-in-workdir = "${colors.base0B}";
+    typechange = "${colors.base0A}";
+    deleted = "${colors.base08}";
+    renamed = "${colors.base0B}";
+    modified = "${colors.base0A}";
+    conflicted = "${colors.base08}";
   };
 }

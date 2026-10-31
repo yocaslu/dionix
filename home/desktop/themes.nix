@@ -42,13 +42,29 @@ in
     # Só entram os alvos ligados um a um
     autoEnable = false;
     base16Scheme = scheme defaultTheme;
-    targets.alacritty = {
-      enable = true;
-      # Fonte e opacidade continuam em settings/alacritty.nix
-      fonts.enable = false;
-      opacity.enable = false;
+    targets = {
+      alacritty = {
+        enable = true;
+        # Fonte e opacidade continuam em settings/alacritty.nix
+        fonts.enable = false;
+        opacity.enable = false;
+      };
+      bat.enable = true;
+      btop = {
+        enable = true;
+        opacity.enable = false;
+      };
+      helix = {
+        enable = true;
+        opacity.enable = false;
+      };
+      spotify-player.enable = true;
+      yazi.enable = true;
     };
   };
+
+  # O tema do Stylix substitui o flavor usado no servidor
+  programs.yazi.theme.flavor = lib.mkForce { };
 
   dionix = {
     theme = defaultTheme;

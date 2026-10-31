@@ -78,7 +78,7 @@ in
     autosuggestion = {
       enable = true;
       # overlay0 do Catppuccin Mocha
-      highlight = "fg=#6c7086";
+      highlight = "fg=${config.dionix.colors.base03}";
     };
     syntaxHighlighting.enable = true;
 
@@ -150,7 +150,7 @@ in
   # Integrações com o shell (os inits que ficavam no fim do ~/.zshrc)
   programs.starship = {
     enable = true;
-    settings = import ./settings/starship.nix;
+    settings = import ./settings/starship.nix config.dionix.colors;
   };
   programs.zoxide.enable = true;
   programs.atuin = {
@@ -171,23 +171,23 @@ in
       "--layout=reverse"
       "--border"
     ];
-    # Cores Catppuccin Mocha (https://github.com/catppuccin/fzf)
+    # Cores do tema ativo
     colors = {
-      "bg+" = "#313244";
-      bg = "#1e1e2e";
-      spinner = "#f5e0dc";
-      hl = "#f38ba8";
-      fg = "#cdd6f4";
-      header = "#f38ba8";
-      info = "#cba6f7";
-      pointer = "#f5e0dc";
-      marker = "#b4befe";
-      "fg+" = "#cdd6f4";
-      prompt = "#cba6f7";
-      "hl+" = "#f38ba8";
-      selected-bg = "#45475a";
-      border = "#6c7086";
-      label = "#cdd6f4";
+      "bg+" = "${config.dionix.colors.base01}";
+      bg = "${config.dionix.colors.base00}";
+      spinner = "${config.dionix.colors.base06}";
+      hl = "${config.dionix.colors.base08}";
+      fg = "${config.dionix.colors.base05}";
+      header = "${config.dionix.colors.base08}";
+      info = "${config.dionix.colors.base0E}";
+      pointer = "${config.dionix.colors.base06}";
+      marker = "${config.dionix.colors.base07}";
+      "fg+" = "${config.dionix.colors.base05}";
+      prompt = "${config.dionix.colors.base0E}";
+      "hl+" = "${config.dionix.colors.base08}";
+      selected-bg = "${config.dionix.colors.base02}";
+      border = "${config.dionix.colors.base03}";
+      label = "${config.dionix.colors.base05}";
     };
   };
 }
