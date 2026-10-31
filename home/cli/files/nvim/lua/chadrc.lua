@@ -6,7 +6,7 @@
 local M = {}
 
 M.base46 = {
-	theme = "onedark",
+	theme = dofile(vim.fn.stdpath "config" .. "/dionix-theme.lua"),
 
 	-- hl_override = {
 	-- 	Comment = { italic = true },

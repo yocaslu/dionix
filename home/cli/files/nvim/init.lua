@@ -25,6 +25,23 @@ require("lazy").setup({
   { import = "plugins" },
 }, lazy_config)
 
+-- o cache do base46 guarda as cores: recompila quando o tema muda
+local theme = dofile(vim.fn.stdpath "config" .. "/dionix-theme.lua")
+local stamp = vim.g.base46_cache .. "theme"
+local file = io.open(stamp, "r")
+local cached = file and file:read "*a"
+if file then
+  file:close()
+end
+if cached ~= theme then
+  require("base46").load_all_highlights()
+  file = io.open(stamp, "w")
+  if file then
+    file:write(theme)
+    file:close()
+  end
+end
+
 -- load theme
 dofile(vim.g.base46_cache .. "defaults")
 dofile(vim.g.base46_cache .. "statusline")

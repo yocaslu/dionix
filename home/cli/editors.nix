@@ -1,5 +1,10 @@
 # Editores: Neovim (NvChad), Helix e Vim.
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   # Neovim baseado no NvChad v2.5. O lazy.nvim continua baixando os plugins,
   # mas os LSPs, formatadores e o compilador do treesitter vêm do Nix: os
@@ -33,6 +38,8 @@
     "nvim/init.lua".source = ./files/nvim/init.lua;
     "nvim/lua".source = ./files/nvim/lua;
     "nvim/.stylua.toml".source = ./files/nvim/.stylua.toml;
+    # Fora de lua/, que é um diretório vindo do store
+    "nvim/dionix-theme.lua".text = ''return "${config.dionix.nvchadTheme}"'';
   };
 
   programs.helix = {
