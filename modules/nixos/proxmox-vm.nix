@@ -19,6 +19,4 @@
     enable = true;
     device = "/dev/sda";
   };
-
-  services.fstrim.enable = true;
 }

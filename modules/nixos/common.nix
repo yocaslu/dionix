@@ -58,8 +58,10 @@
       "audio"
     ];
     shell = pkgs.zsh;
-    # Coloque aqui as suas chaves públicas para entrar por SSH
-    openssh.authorizedKeys.keys = [ ];
+    # Chaves públicas que entram por SSH
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP4s/WUv8TiHRuLto1p+qdo1qMxNDOxGafbtWyBcFakv"
+    ];
   };
   programs.zsh.enable = true;
   # Completação dos pacotes do sistema para o zsh do Home Manager
@@ -74,6 +76,16 @@
     };
   };
 
+  # A máquina entra na tailnet com `sudo tailscale up` depois da instalação
+  services.tailscale.enable = true;
+
+  # Swap comprimido na RAM e TRIM semanal do disco
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+  };
+  services.fstrim.enable = true;
+
   environment.systemPackages = with pkgs; [
     git
     curl
@@ -82,6 +94,15 @@
     file
     pciutils
     usbutils
+    rsync
+    unzip
+    pv
+    dnsutils
+    nmap
+    traceroute
+    ethtool
+    smartmontools
+    glances
   ];
 
   home-manager = {
