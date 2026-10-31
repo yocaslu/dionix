@@ -1,0 +1,5 @@
+# Links criados por `nix build` / `nixos-rebuild build`
+result
+result-*
+# Backups do Home Manager (home-manager.backupFileExtension)
+*.hm-bak
