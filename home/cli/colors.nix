@@ -52,14 +52,19 @@ in
       default = "catppuccin";
       description = "Tema do base46 equivalente ao tema ativo.";
     };
-    # Troca @base00@ por #rrggbb e @base00-rgb@ por "r, g, b" em um texto
+    # Troca @base00@ por #rrggbb, @base00-hex@ por rrggbb e @base00-rgb@ por "r, g, b"
     render = lib.mkOption {
       type = lib.types.functionTo lib.types.str;
       readOnly = true;
       description = "Substitui os tokens de cor em um texto.";
-      default = builtins.replaceStrings (map (n: "@${n}@") names ++ map (n: "@${n}-rgb@") names) (
-        map (n: colors.${n}) names ++ map (n: rgb colors.${n}) names
-      );
+      default =
+        builtins.replaceStrings
+          (map (n: "@${n}@") names ++ map (n: "@${n}-hex@") names ++ map (n: "@${n}-rgb@") names)
+          (
+            map (n: colors.${n}) names
+            ++ map (n: builtins.substring 1 6 colors.${n}) names
+            ++ map (n: rgb colors.${n}) names
+          );
     };
   };
 }

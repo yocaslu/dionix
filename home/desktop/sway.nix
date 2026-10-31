@@ -253,7 +253,9 @@ in
   };
 
   # Avisos e erros do Sway
-  xdg.configFile."swaynag/config".source = ./files/swaynag.conf;
+  xdg.configFile."swaynag/config".text = config.dionix.render (
+    builtins.readFile ./files/swaynag.conf
+  );
 
   # Bloqueia em 5 min, desliga as telas em 10 min e bloqueia antes de suspender.
   # O módulo idle_inhibitor da Waybar pausa esses timeouts.
@@ -280,7 +282,7 @@ in
   programs.swaylock = {
     enable = true;
     package = pkgs.swaylock-effects;
-    settings = import ./settings/swaylock.nix;
+    settings = import ./settings/swaylock.nix c;
   };
 
   # Perfis de monitor: externo à esquerda + notebook, só o notebook, só o externo
@@ -331,7 +333,9 @@ in
   services.autotiling.enable = true;
   services.swayosd = {
     enable = true;
-    stylePath = ./files/swayosd/style.css;
+    stylePath = pkgs.writeText "swayosd.css" (
+      config.dionix.render (builtins.readFile ./files/swayosd/style.css)
+    );
   };
   # Luz noturna: 4000K entre 18:30 e 06:30 (horários fixos, sem localização)
   services.wlsunset = {
