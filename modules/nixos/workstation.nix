@@ -95,9 +95,26 @@
   # Binários genéricos baixados da internet (ex.: extensões, toolchains)
   programs.nix-ld.enable = true;
 
+  # O rust-analyzer precisa do código da std para completar e navegar nela
+  environment.sessionVariables.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+
   environment.systemPackages = with pkgs; [
     distrobox
     wl-clipboard
+    # Rust (o gcc é o linker usado pelo cargo)
+    rustc
+    cargo
+    clippy
+    rustfmt
+    rust-analyzer
+    gcc
+    # Go
+    go
+    gopls
+    # Python
+    uv
+    ruff
+    pyright
   ];
 
   home-manager.users.${username}.imports = [ ../../home/desktop ];
