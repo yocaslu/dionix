@@ -1,7 +1,10 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
-# (grim + slurp + swappy) e os apps padrão
+# (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
+# Zed), senhas (rbw) e os apps padrão
 { lib, pkgs, ... }:
 {
+  programs.firefox.enable = true;
+
   programs.alacritty = {
     enable = true;
     settings = lib.recursiveUpdate (import ./settings/alacritty.nix) (
@@ -37,6 +40,12 @@
     libnotify
     brightnessctl
     xdg-utils
+    # Configs continuam editáveis em ~/.config, fora do Nix
+    vscode
+    zed-editor
+    # Cliente Bitwarden de terminal, sem Electron e com senha pedida no terminal
+    rbw
+    pinentry-curses
   ];
 
   xdg.userDirs = {
@@ -50,7 +59,12 @@
       let
         assoc = app: types: lib.genAttrs types (_: [ app ]);
       in
-      assoc "org.pwmt.zathura.desktop" [
+      assoc "firefox.desktop" [
+        "text/html"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+      ]
+      // assoc "org.pwmt.zathura.desktop" [
         "application/pdf"
         "application/epub+zip"
       ]

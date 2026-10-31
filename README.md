@@ -23,6 +23,7 @@ modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
+  desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
   docker-host.nix          Docker, limpeza automática, oci-containers
   proxmox-vm.nix           agente QEMU, console serial, GRUB
 home/
@@ -36,7 +37,18 @@ Cada papel em `modules/nixos/` traz junto a parte do Home Manager que lhe corres
 
 ## Instalação
 
-### Notebook ou desktop
+### Instalação automática (notebook ou desktop)
+
+Com a ISO do NixOS iniciada em modo UEFI, o script **apaga o disco escolhido**, particiona, clona o repositório, gera a configuração de hardware, instala e pede a senha de `dio`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/yocaslu/dionix/main/scripts/install-nixos.sh -o install-nixos.sh
+sudo bash install-nixos.sh desktop /dev/sda
+```
+
+Depois do primeiro boot, commite o `hardware-configuration.nix` gerado em `~/repos/dionix`.
+
+### Notebook ou desktop (manual)
 
 1. Instale o NixOS pela ISO (instalador gráfico ou mínimo), com o usuário `dio`.
 2. Clone o repositório e gere a configuração de hardware da máquina:
