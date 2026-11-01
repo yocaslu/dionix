@@ -1,5 +1,5 @@
 # Servidor do homelab, direto no hardware (sem Proxmox): i7-4790, 32 GB, RX 580,
-# sistema num HD de 500 GB e espelho ZFS nos dois HDs de 1 TB (disko.nix).
+# sistema num HD de 500 GB e espelho ZFS nos dois HDs de 1 TB (tank.nix).
 # Fica na rede de casa, em 10.42.1.20; o Pi publica cada serviço com HTTPS em
 # <serviço>.vault76.com.br.
 #
@@ -12,16 +12,13 @@
 # Instalação e atualização: docs/homelab.md.
 {
   config,
-  inputs,
   pkgs,
   ...
 }:
 {
   imports = [
-    ./hardware-configuration.nix
-    ./disko.nix
-    inputs.disko.nixosModules.disko
-    ../../modules/nixos/common.nix
+    ./base.nix
+    ./tank.nix
     ../../modules/nixos/storage.nix
     ../../modules/nixos/nextcloud.nix
     ../../modules/nixos/media.nix
@@ -31,25 +28,11 @@
     ../../modules/nixos/backup.nix
   ];
 
-  boot.loader = {
-    systemd-boot.enable = true;
-    efi.canTouchEfiVariables = true;
-  };
-
-  # Rede: qualquer porta Ethernet (o adaptador USB muda de nome conforme a porta),
-  # por DHCP. Reserve 10.42.1.20 para o MAC do adaptador no roteador da operadora.
-  networking.useNetworkd = true;
+  # O DNS é o Technitium do Pi (resolve *.vault76.com.br para o proxy:
+  # o Nextcloud e o Collabora conversam entre si por esses nomes)
   systemd.network.networks."10-ethernet" = {
-    matchConfig.Type = "ether";
-    networkConfig = {
-      DHCP = "yes";
-      IPv6AcceptRA = true;
-    };
-    # O DNS é o Technitium do Pi (resolve *.vault76.com.br para o proxy:
-    # o Nextcloud e o Collabora conversam entre si por esses nomes)
     dhcpV4Config.UseDNS = false;
     dns = [ config.dionix.homelab.pi ];
-    linkConfig.RequiredForOnline = "routable";
   };
 
   # RX 580: decodificação e codificação de vídeo (VA-API, Mesa)

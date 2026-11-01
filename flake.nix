@@ -55,6 +55,8 @@
         notebook = "x86_64-linux";
         desktop = "x86_64-linux";
         server = "x86_64-linux";
+        # Sistema mínimo gravado no HD do server pelo desktop (docs/homelab.md)
+        server-bootstrap = "x86_64-linux";
         pi = "aarch64-linux";
       };
 
