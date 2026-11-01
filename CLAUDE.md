@@ -4,7 +4,7 @@ Guia para o Claude trabalhar neste repositório.
 
 ## O que é
 
-Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `desktop`, `server` (VM Proxmox, 10.0.76.8, com todos os serviços nativos: Nextcloud, mídia, NUT, monitoramento) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium, proxy Nginx, LDAP lldap, TURN, status e backup no Google Drive, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
+Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `desktop`, `server` (VM Proxmox, 10.0.76.8, com todos os serviços nativos: Nextcloud, mídia, monitoramento) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium, proxy Nginx, LDAP lldap, TURN, FTP dos jogos do Switch, status e backup no Google Drive, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
 
 ## Onde mexer
 

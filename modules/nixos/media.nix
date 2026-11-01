@@ -5,6 +5,8 @@
 # Caminhos dentro do compartilhamento "data" do NAS (/mnt/nas/data):
 #   torrents/<categoria>   downloads do qBittorrent (categorias: filmes, series, musica, livros)
 #   media/<categoria>      biblioteca organizada pelos Arr, lida pelo Jellyfin
+#   games/switch           jogos do Switch: categoria "switch" do qBittorrent;
+#                          aparece no Nextcloud e no FTP do Pi (switch-ftp.nix)
 # Como os dois ficam no mesmo compartilhamento, a importação é por hardlink:
 # o arquivo continua semeando sem ocupar espaço duas vezes.
 #

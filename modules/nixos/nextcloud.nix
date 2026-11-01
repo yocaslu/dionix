@@ -11,6 +11,8 @@
 #
 # Os arquivos dos usuários ficam no NAS (compartilhamento "nextcloud", montado em
 # /var/lib/nextcloud/data); configuração, apps e banco ficam no disco da VM.
+# A pasta de jogos do Switch (games/switch do compartilhamento "data") aparece
+# como armazenamento externo "Jogos do Switch" para o grupo admin.
 #
 # Segredos: gerados no primeiro boot em /var/lib/secrets (nextcloud-secrets.service).
 # Só o turn-secret é compartilhado: copie-o para /var/lib/secrets/turn-secret no Pi.
@@ -26,6 +28,7 @@ let
   occ = lib.getExe nc.occ;
   url = name: "https://${name}.${domain}";
   secrets = "/var/lib/secrets";
+  jogos = "/mnt/nas/data/games/switch";
 
   # Portas das chamadas (WebRTC) do Janus
   rtpPorts = {
@@ -101,7 +104,11 @@ in
     path = "/nextcloud";
     mountPoint = "${nc.home}/data";
   };
-  users.users.nextcloud.uid = 2001;
+  users.users.nextcloud = {
+    uid = 2001;
+    # Lê e organiza a pasta de jogos baixados pelo qBittorrent
+    extraGroups = [ "media" ];
+  };
   users.groups.nextcloud.gid = 2001;
 
   services.nextcloud = {
@@ -147,7 +154,10 @@ in
 
   # O setup e o PHP só sobem com o NAS montado
   systemd.services.nextcloud-setup.unitConfig.RequiresMountsFor = "${nc.home}/data";
-  systemd.services.phpfpm-nextcloud.unitConfig.RequiresMountsFor = "${nc.home}/data";
+  systemd.services.phpfpm-nextcloud.unitConfig.RequiresMountsFor = [
+    "${nc.home}/data"
+    jogos
+  ];
 
   # Documentos: o Pi publica collabora.<domínio> com HTTPS
   services.collabora-online = {
@@ -290,6 +300,13 @@ in
         occ talk:stun:add ${pi}:3478
       fi
       occ talk:stun:delete stun.nextcloud.com:443 2>/dev/null || true
+
+      # Jogos do Switch como armazenamento externo (pasta local da VM, vinda do NAS)
+      occ app:enable files_external
+      if ! occ files_external:list --output=json | jq -e '.[] | select(.mount_point == "/Jogos do Switch")' >/dev/null; then
+        id="$(occ files_external:create "/Jogos do Switch" local null::null -c datadir=${jogos} | grep -o '[0-9]*$')"
+        occ files_external:applicable --add-group=admin "$id"
+      fi
     '';
   };
 

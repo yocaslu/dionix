@@ -42,6 +42,7 @@ in
                 type = lib.types.str;
                 default = "/mnt/nas/${name}";
               };
+              readOnly = lib.mkEnableOption "montagem somente leitura";
             };
           }
         )
@@ -66,7 +67,8 @@ in
           "noauto"
           "x-systemd.mount-timeout=30"
           "_netdev"
-        ];
+        ]
+        ++ lib.optional share.readOnly "ro";
       }
     ) cfg.shares;
 

@@ -6,8 +6,8 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
-| `server` | VM no Proxmox do homelab (10.0.76.8) | base + VM Proxmox + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + NUT + Prometheus/Grafana, tudo nativo |
-| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + TURN + status (Gatus) + backup |
+| `server` | VM no Proxmox do homelab (10.0.76.8) | base + VM Proxmox + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + Prometheus/Grafana, tudo nativo |
+| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + TURN + FTP dos jogos do Switch + status (Gatus) + backup |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
 
@@ -19,7 +19,7 @@ O ambiente gráfico é o mesmo dos meus [dotfiles](https://github.com/yocaslu/do
 flake.nix                  hosts, inputs e o `nix flake check`
 flake.lock                 versões fixadas (nixpkgs, home-manager, plugins)
 overlays/default.nix       pkgs.unstable, plugins do tmux e pacotes próprios (pkgs/)
-pkgs/nut/                  NUT (servidor de títulos do Switch), que não está no nixpkgs
+pkgs/nut/                  NUT (servidor de títulos do Switch), que não está no nixpkgs (pausado)
 docs/homelab.md            passo a passo dos serviços do homelab (rede, NAS, painéis)
 hosts/<host>/              default.nix (papéis do host) + hardware-configuration.nix
 modules/nixos/
@@ -40,7 +40,8 @@ modules/nixos/
   nextcloud.nix            Nextcloud + Collabora + Whiteboard + Talk (sinalização + Janus)
   talk-turn.nix            coturn (TURN das chamadas), no Pi
   media.nix                Jellyfin, Seerr, suite Arr, qBittorrent
-  switch-nut.nix           NUT para o Tinfoil
+  switch-nut.nix           NUT para o Tinfoil (pausado, fora dos hosts)
+  switch-ftp.nix           FTP só leitura dos jogos do Switch, no Pi
   monitoring.nix           Prometheus + Grafana
   node-exporter.nix        métricas dos hosts para o Prometheus
   status.nix               página de status (Gatus), no Pi

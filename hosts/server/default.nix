@@ -4,7 +4,6 @@
 #
 #   nextcloud.nix     Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus)
 #   media.nix         Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, qBittorrent
-#   switch-nut.nix    NUT (títulos do Switch para o Tinfoil)
 #   monitoring.nix    Prometheus + Grafana
 #
 # Para mais servidores, copie esta pasta (ex.: hosts/server2) e adicione o
@@ -17,7 +16,7 @@
     ../../modules/nixos/proxmox-vm.nix
     ../../modules/nixos/nextcloud.nix
     ../../modules/nixos/media.nix
-    ../../modules/nixos/switch-nut.nix
+    # NUT pausado: precisa de preparativos no Switch (switch-nut.nix fica para depois)
     ../../modules/nixos/monitoring.nix
     ../../modules/nixos/backup.nix
   ];
@@ -42,14 +41,12 @@
       "/var/lib/private/prowlarr"
       "/var/lib/bazarr"
       "/var/lib/qBittorrent"
-      "/var/lib/private/nut"
       "/var/lib/grafana"
       "/var/lib/secrets"
     ];
     exclude = [
       "/var/lib/jellyfin/transcodes"
       "/var/lib/jellyfin/metadata"
-      "/var/lib/private/nut/app/titledb"
     ];
   };
 

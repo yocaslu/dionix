@@ -1,6 +1,6 @@
 # Raspberry Pi 4 do homelab (10.42.1.2): roteador do Tailscale, DNS
 # (Technitium), proxy reverso (Nginx), login central (lldap), TURN das chamadas
-# do Talk, página de status e backup no Google Drive. Substitui o core-compose
+# do Talk, FTP dos jogos do Switch, página de status e backup no Google Drive. Substitui o core-compose
 # (Traefik, Technitium e Portainer em Docker). Não tem hardware-configuration.nix:
 # a imagem SD já define os sistemas de arquivos (modules/nixos/raspberry-pi.nix).
 {
@@ -31,6 +31,7 @@ in
     ../../modules/nixos/reverse-proxy.nix
     ../../modules/nixos/ldap.nix
     ../../modules/nixos/talk-turn.nix
+    ../../modules/nixos/switch-ftp.nix
     ../../modules/nixos/status.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
@@ -74,12 +75,6 @@ in
       prowlarr = em 9696;
       bazarr = em 6767;
       qbittorrent = em 8081;
-
-      # VM server: jogos do Switch (switch-nut.nix), sem login próprio
-      nut = {
-        upstream = em 9000;
-        basicAuthFile = "/var/lib/secrets/nut.htpasswd";
-      };
 
       # VM server: monitoramento (monitoring.nix)
       grafana = em 3000;

@@ -4,8 +4,8 @@ Todos os serviços rodam nativos no NixOS, sem containers, em dois hosts:
 
 | Host | Onde | O que roda |
 |---|---|---|
-| `pi` | Raspberry Pi 4, `10.42.1.2` (rede de casa) | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), TURN do Talk (coturn), página de status (Gatus), roteador Tailscale da rede de casa (`10.42.1.0/24`) e exit node |
-| `server` | VM no Proxmox, `10.0.76.8` (LAN do pfSense) | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, NUT, Prometheus + Grafana |
+| `pi` | Raspberry Pi 4, `10.42.1.2` (rede de casa) | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), TURN do Talk (coturn), FTP dos jogos do Switch (vsftpd), página de status (Gatus), roteador Tailscale da rede de casa (`10.42.1.0/24`) e exit node |
+| `server` | VM no Proxmox, `10.0.76.8` (LAN do pfSense) | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, Prometheus + Grafana |
 
 Os arquivos grandes (mídia, downloads, jogos, dados do Nextcloud) ficam no NAS (OpenMediaVault, `10.0.76.6`) e chegam à VM por NFS.
 
@@ -34,7 +34,7 @@ cliente ──HTTPS──▶ Pi (Nginx, *.vault76.com.br) ──HTTP──▶ VM
 | Pedidos (Seerr) | `pedidos.vault76.com.br` | VM |
 | Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr | `<nome>.vault76.com.br` | VM |
 | qBittorrent | `qbittorrent.vault76.com.br` | VM |
-| NUT (Tinfoil) | `nut.vault76.com.br` (com usuário e senha) | VM |
+| Jogos do Switch (FTP) | `ftp://10.42.1.2`, usuário `switch`, só leitura e só na rede de casa | Pi |
 | Grafana | `grafana.vault76.com.br` | VM |
 | Status | `status.vault76.com.br` | Pi |
 | LDAP / DNS | `ldap.` / `dns.vault76.com.br` | Pi |
@@ -57,6 +57,8 @@ Crie dois compartilhamentos e exporte por NFS para `10.0.76.8` com `rw,subtree_c
 | `data` | grupo GID **2000**, `chmod 2775` (setgid) | `torrents/{filmes,series,musica,livros}`, `media/{filmes,series,musica,livros}`, `games/switch` |
 | `nextcloud` | usuário UID **2001**, `chmod 0770` | arquivos do Nextcloud |
 
+Exporte o `data` também para o Pi (`10.42.1.2`), **só leitura** (`ro`): ele monta só a pasta `games/switch` para o FTP do Switch.
+
 Downloads e biblioteca no **mesmo** compartilhamento: os Arr importam por hardlink, sem copiar. Confira o caminho exportado com `showmount -e 10.0.76.6` e, se não for `/data` e `/nextcloud`, ajuste `dionix.nas.shares.<nome>.path`.
 
 ## 3. Instalar a VM `server`
@@ -78,9 +80,8 @@ Downloads e biblioteca no **mesmo** compartilhamento: os Arr importam por hardli
 # TURN (o mesmo arquivo gerado na VM)
 sudo install -Dm600 turn-secret /var/lib/secrets/turn-secret
 
-# Usuário e senha do NUT (o NUT não tem login próprio)
-nix shell nixpkgs#apacheHttpd -c htpasswd -cB /tmp/nut.htpasswd tinfoil
-sudo install -Dm640 -g nginx /tmp/nut.htpasswd /var/lib/secrets/nut.htpasswd
+# Senha do usuário "switch" do FTP (hash SHA-512); depois, aplique de novo a configuração
+nix shell nixpkgs#mkpasswd -c mkpasswd -m sha-512 | sudo install -Dm600 /dev/stdin /var/lib/secrets/switch-ftp.hash
 ```
 
 ## 5. Ligar os serviços pelos painéis
@@ -107,11 +108,17 @@ sudo install -Dm640 -g nginx /tmp/nut.htpasswd /var/lib/secrets/nut.htpasswd
 
 **Bazarr**: conecte ao Sonarr e ao Radarr (`http://localhost:<porta>`).
 
-**NUT**: copie suas chaves para `/var/lib/nut/app/keys.txt` e reinicie (`systemctl restart nut`). No Tinfoil, *File Browser → nova fonte*: protocolo `https`, host `nut.vault76.com.br`, porta `443`, usuário e senha do htpasswd.
+**Jogos do Switch**:
+
+- **qBittorrent**: crie a categoria `switch` com o caminho `/mnt/nas/data/games/switch`. Torrents nessa categoria vão direto para a pasta de jogos.
+- **Nextcloud**: a pasta aparece para o grupo `admin` como armazenamento externo *Jogos do Switch* (configurado sozinho pelo `nextcloud-apps-config.service`). Dá para renomear, organizar e apagar pelo navegador. Para liberar a outros usuários, *Administração → Armazenamento externo*.
+- **No Switch**: no gerenciador que você usar (DBI, Tinfoil, Goldleaf…), adicione uma fonte FTP com host `10.42.1.2`, porta `21`, usuário `switch` e a senha do passo 4, modo passivo. O FTP só aceita conexões da rede de casa (`10.42.1.0/24`) e é só leitura.
 
 **Grafana**: o Prometheus já é a fonte de dados. Painel dos hosts: *Dashboards → New → Import → 1860*. No Proxmox e no NAS, `apt install prometheus-node-exporter` para eles aparecerem.
 
 ## Observações
+
+- **NUT (servidor para o Tinfoil)**: pausado. O pacote (`pkgs/nut`) e o módulo (`modules/nixos/switch-nut.nix`) ficam no repositório; para voltar, importe o módulo no `server` e adicione `nut` ao proxy do Pi (com `basicAuthFile`, porque o NUT não tem login próprio).
 
 - **Readarr**: o projeto foi descontinuado pelos autores em 2025. O pacote continua no nixpkgs, mas sem atualizações; se ele parar de funcionar, remova-o de `media.nix`.
 - **Chamadas do Talk** só funcionam em casa e pela tailnet (sem portas abertas na internet). Para liberar de fora, o coturn precisaria de IP público e portas abertas no roteador e no pfSense.
