@@ -7,6 +7,18 @@
   pkgs,
   ...
 }:
+let
+  sshKeyRestore = pkgs.writeShellApplication {
+    name = "ssh-key-restore";
+    runtimeInputs = with pkgs; [
+      coreutils
+      jq
+      openssh
+      rbw
+    ];
+    text = builtins.readFile ./files/ssh-key-restore/ssh-key-restore.sh;
+  };
+in
 {
   programs.firefox.enable = true;
 
@@ -51,6 +63,7 @@
     # Cliente Bitwarden de terminal, sem Electron e com senha pedida no terminal
     rbw
     pinentry-curses
+    sshKeyRestore
   ];
 
   xdg.userDirs = {

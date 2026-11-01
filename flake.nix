@@ -99,6 +99,19 @@
             bash ${./home/desktop/files/theme/theme-test.sh} ${./home/desktop/files/theme/theme.sh}
             touch $out
           '';
+          # Testes do comando `ssh-key-restore`
+          ssh-key-restore =
+            pkgs.runCommand "ssh-key-restore-test"
+              {
+                nativeBuildInputs = with pkgs; [
+                  jq
+                  openssh
+                ];
+              }
+              ''
+                bash ${./home/desktop/files/ssh-key-restore/ssh-key-restore-test.sh} ${./home/desktop/files/ssh-key-restore/ssh-key-restore.sh}
+                touch $out
+              '';
         };
     };
 }
