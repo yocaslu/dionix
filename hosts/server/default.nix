@@ -1,37 +1,69 @@
-# VM `server` no Proxmox (10.0.76.8, LAN do pfSense): todos os serviços do
-# homelab rodando nativos, sem containers. O Pi publica cada um com HTTPS em
-# <serviço>.vault76.com.br; os arquivos grandes ficam no NAS (NFS).
+# Servidor do homelab, direto no hardware (sem Proxmox): i7-4790, 32 GB, RX 580,
+# sistema num HD de 500 GB e espelho ZFS nos dois HDs de 1 TB (disko.nix).
+# Fica na rede de casa, em 10.42.1.20; o Pi publica cada serviço com HTTPS em
+# <serviço>.vault76.com.br.
 #
+#   storage.nix       pool ZFS: snapshots, scrub, SMART
 #   nextcloud.nix     Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus)
-#   media.nix         Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, qBittorrent
+#   media.nix         Jellyfin (VA-API na RX 580), Seerr, suite Arr, qBittorrent
+#   switch-ftp.nix    FTP só leitura dos jogos do Switch para a rede de casa
 #   monitoring.nix    Prometheus + Grafana
 #
-# Para mais servidores, copie esta pasta (ex.: hosts/server2) e adicione o
-# nome em `hosts` no flake.nix.
-{ config, ... }:
+# Instalação e atualização: docs/homelab.md.
+{
+  config,
+  inputs,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ./hardware-configuration.nix
+    ./disko.nix
+    inputs.disko.nixosModules.disko
     ../../modules/nixos/common.nix
-    ../../modules/nixos/proxmox-vm.nix
+    ../../modules/nixos/storage.nix
     ../../modules/nixos/nextcloud.nix
     ../../modules/nixos/media.nix
+    ../../modules/nixos/switch-ftp.nix
     # NUT pausado: precisa de preparativos no Switch (switch-nut.nix fica para depois)
     ../../modules/nixos/monitoring.nix
     ../../modules/nixos/backup.nix
   ];
 
-  # IP por reserva no DHCP do pfSense (Services → DHCP Server → LAN → Static Mappings,
-  # com o MAC desta VM). O DNS é o Technitium do Pi, que resolve *.vault76.com.br
-  # para o proxy: o Nextcloud e o Collabora conversam entre si por esses nomes.
-  networking.nameservers = [ config.dionix.homelab.pi ];
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+  };
 
-  # Backup diário no Google Drive (gdrive:homelab/server). Os arquivos do NAS
-  # (mídia, jogos e dados do Nextcloud) entram no backup do próprio NAS.
+  # Rede: qualquer porta Ethernet (o adaptador USB muda de nome conforme a porta),
+  # por DHCP. Reserve 10.42.1.20 para o MAC do adaptador no roteador da operadora.
+  networking.useNetworkd = true;
+  systemd.network.networks."10-ethernet" = {
+    matchConfig.Type = "ether";
+    networkConfig = {
+      DHCP = "yes";
+      IPv6AcceptRA = true;
+    };
+    # O DNS é o Technitium do Pi (resolve *.vault76.com.br para o proxy:
+    # o Nextcloud e o Collabora conversam entre si por esses nomes)
+    dhcpV4Config.UseDNS = false;
+    dns = [ config.dionix.homelab.pi ];
+    linkConfig.RequiredForOnline = "routable";
+  };
+
+  # RX 580: decodificação e codificação de vídeo (VA-API, Mesa)
+  hardware.graphics.enable = true;
+  environment.systemPackages = [ pkgs.libva-utils ]; # `vainfo` confere a aceleração
+
+  # Backup diário no Google Drive (gdrive:homelab/server): configuração dos
+  # serviços, dump do banco e os dados do pool
   dionix.backup = {
     paths = [
       "/var/lib/nextcloud/config"
+      "/var/lib/nextcloud/data"
       "/var/backup/postgresql" # dump do banco do Nextcloud (abaixo)
+      config.dionix.storage.data
       "/var/lib/jellyfin"
       "/var/lib/seerr"
       "/var/lib/sonarr"
@@ -47,6 +79,10 @@
     exclude = [
       "/var/lib/jellyfin/transcodes"
       "/var/lib/jellyfin/metadata"
+      # Downloads em andamento; o que terminou já está em media/ (mesmo arquivo, por hardlink)
+      "${config.dionix.storage.data}/torrents"
+      # Snapshots do ZFS (já são cópias do que está sendo salvo)
+      ".zfs"
     ];
   };
 

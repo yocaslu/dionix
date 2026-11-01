@@ -2,7 +2,7 @@
 #
 #   nut.<domínio>  :9000, publicado pelo Pi com autenticação básica (o NUT
 #                  não tem login próprio: a autenticação dele está desativada no código)
-#   Jogos:         /mnt/nas/data/games/switch (somente leitura)
+#   Jogos:         /srv/data/games/switch (somente leitura)
 #   Estado:        /var/lib/nut (base de títulos, fila, keys.txt)
 #
 # Para o NUT identificar os arquivos, copie suas chaves para /var/lib/nut/app/keys.txt.
@@ -18,7 +18,7 @@
   ...
 }:
 let
-  games = "/mnt/nas/data/games/switch";
+  games = "${config.dionix.storage.data}/games/switch";
   state = "/var/lib/nut";
 
   nutConf = (pkgs.formats.json { }).generate "nut.conf" {
@@ -28,7 +28,7 @@ let
       port = 9000;
       enableLocalDriveAccess = 0;
     };
-    # Só serve o que já está no NAS: nada de baixar títulos
+    # Só serve o que já está na pasta: nada de baixar títulos
     download = {
       base = false;
       update = false;
@@ -38,9 +38,7 @@ let
   };
 in
 {
-  imports = [ ./nas.nix ];
-
-  dionix.nas.shares.data.path = "/data";
+  imports = [ ./storage.nix ];
 
   systemd.services.nut = {
     description = "NUT: servidor de títulos do Switch";
@@ -59,7 +57,7 @@ in
       WorkingDirectory = "${state}/app";
       StateDirectory = "nut";
       DynamicUser = true;
-      # Lê os jogos do NAS (grupo media, somente leitura)
+      # Lê os jogos (grupo media, somente leitura)
       SupplementaryGroups = [ "media" ];
       ReadOnlyPaths = [ games ];
       Restart = "on-failure";

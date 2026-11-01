@@ -6,8 +6,8 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
-| `server` | VM no Proxmox do homelab (10.0.76.8) | base + VM Proxmox + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + Prometheus/Grafana, tudo nativo |
-| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + TURN + FTP dos jogos do Switch + status (Gatus) + backup |
+| `server` | Servidor do homelab, direto no hardware (i7-4790, RX 580, 10.42.1.20) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
+| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + status (Gatus) + backup |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
 
@@ -20,7 +20,8 @@ flake.nix                  hosts, inputs e o `nix flake check`
 flake.lock                 versões fixadas (nixpkgs, home-manager, plugins)
 overlays/default.nix       pkgs.unstable, plugins do tmux e pacotes próprios (pkgs/)
 pkgs/nut/                  NUT (servidor de títulos do Switch), que não está no nixpkgs (pausado)
-docs/homelab.md            passo a passo dos serviços do homelab (rede, NAS, painéis)
+docs/homelab.md            homelab: arquitetura, instalação do server e ligação dos serviços
+docs/backup.md             backup no Google Drive (rclone + restic)
 hosts/<host>/              default.nix (papéis do host) + hardware-configuration.nix
 modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
@@ -28,7 +29,7 @@ modules/nixos/
   laptop.nix               Bluetooth, touchpad, tampa
   desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
   docker-host.nix          Docker, limpeza automática, oci-containers (sem uso: tudo é nativo)
-  proxmox-vm.nix           agente QEMU, console serial, GRUB
+  proxmox-vm.nix           agente QEMU, console serial, GRUB (sem uso: para VMs futuras)
   raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão
   tailscale-router.nix     subnet router e exit node da tailnet
   dns-server.nix           Technitium DNS Server (painel na 5380, só pelo proxy)
@@ -36,12 +37,11 @@ modules/nixos/
   ldap.nix                 lldap: login central (LDAP/LDAPS + painel web)
   backup.nix               restic diário para o Google Drive (rclone)
   homelab.nix              domínio e IPs do homelab, usados pelos papéis abaixo
-  nas.nix                  compartilhamentos NFS do NAS, grupo media
+  storage.nix              pool ZFS do server: snapshots, scrub, SMART, grupo media
   nextcloud.nix            Nextcloud + Collabora + Whiteboard + Talk (sinalização + Janus)
-  talk-turn.nix            coturn (TURN das chamadas), no Pi
   media.nix                Jellyfin, Seerr, suite Arr, qBittorrent
   switch-nut.nix           NUT para o Tinfoil (pausado, fora dos hosts)
-  switch-ftp.nix           FTP só leitura dos jogos do Switch, no Pi
+  switch-ftp.nix           FTP só leitura dos jogos do Switch, no server
   monitoring.nix           Prometheus + Grafana
   node-exporter.nix        métricas dos hosts para o Prometheus
   status.nix               página de status (Gatus), no Pi
@@ -92,20 +92,15 @@ Depois do primeiro boot, commite o `hardware-configuration.nix` gerado em `~/rep
 
 Se os dotfiles do chezmoi já estiverem aplicados em `~`, o Home Manager renomeia os arquivos que vai substituir para `<arquivo>.hm-bak` em vez de falhar.
 
-### Servidor (VM no Proxmox)
+### Servidor
 
-Todos os serviços rodam nativos, sem containers. O passo a passo (rede, NAS, primeiro boot e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
+Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos dois HDs de 1 TB, declarados em `hosts/server/disko.nix`. A instalação roda do desktop com o [`nixos-anywhere`](https://github.com/nix-community/nixos-anywhere), por SSH, sem pendrive. O passo a passo (rede, discos, instalação e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
 
-1. Crie a VM (SeaBIOS, disco VirtIO, **QEMU Guest Agent** ativado) e instale o NixOS pela ISO mínima, com o disco em `/dev/sda`.
-2. Gere o `hosts/server/hardware-configuration.nix` dentro da VM e aplique com `sudo nixos-rebuild switch --flake .#server`.
-
-Depois da primeira instalação, dá para aplicar mudanças a partir do desktop:
+Atualizações a partir do desktop:
 
 ```sh
-nixos-rebuild switch --flake .#server --target-host dio@10.0.76.8 --sudo
+nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo
 ```
-
-Para mais servidores, copie `hosts/server/` para `hosts/<nome>/` e adicione o nome (e a arquitetura) em `hosts` no `flake.nix`.
 
 ### Raspberry Pi (roteador, DNS e proxy)
 
@@ -124,25 +119,13 @@ zstdcat result/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress co
 5. Abra o painel do Technitium (`ssh -L 5380:localhost:5380 dio@10.42.1.2` e `http://localhost:5380`), defina a senha de admin e os encaminhadores (1.1.1.1, 8.8.8.8), e crie a zona `vault76.com.br` com um registro `*` (A) para `10.42.1.2`. A partir daí o painel também fica em `https://dns.vault76.com.br`.
 6. Aponte o DNS do DHCP do roteador para o Pi, se quiser que a rede toda use o Technitium.
 
-#### Acesso às VMs (rota pelo pfSense)
-
-O Pi fica na rede de casa e as VMs atrás do pfSense. Em vez de NAT por serviço, o Pi tem uma rota para `10.0.76.0/24` e `10.0.21.0/24` pela WAN do pfSense:
-
-1. Reserve um IP fixo para a WAN do pfSense no roteador da operadora e preencha `pfsenseWan` em `hosts/pi/default.nix`.
-2. No pfSense, em *Firewall → Rules → WAN*, libere a origem `10.42.1.2` para *LAN net* e *DEV net*. *Block private networks* precisa ficar desligado na WAN.
-3. Para abrir o painel do pfSense pelo proxy (`pfsense.vault76.com.br`), adicione esse nome em *System → Advanced → Alternate Hostnames* (senão o pfSense acusa DNS rebind).
-4. No Nextcloud, troque o `TRUSTED_PROXIES` por `10.42.1.2`: com a rota, o Nextcloud vê o IP real do Pi.
-5. Desligue *Accept Routes* no Tailscale do pfSense: ele aceitaria a `10.42.1.0/24` que o Pi anuncia, que é a rede da própria WAN.
-
-Os serviços do proxy ficam em `dionix.proxy.hosts`: uma entrada pode ser só o endereço ou ter rotas extras, uploads grandes e HSTS (veja o Nextcloud). O certificado é um curinga `*.vault76.com.br`, renovado sozinho pelo `security.acme`.
-
 #### Login central (lldap)
 
 Antes do primeiro boot com o LDAP, crie a senha do admin: `sudo install -Dm600 /dev/stdin /var/lib/secrets/lldap-admin-pass <<< 'senha-forte'`. O painel fica em `https://ldap.vault76.com.br`. Os serviços usam `ldaps://ldap.vault76.com.br:6360` com base `dc=vault76,dc=com,dc=br`; crie um usuário só para o bind de cada serviço, no grupo `lldap_strict_readonly`.
 
 #### Backup
 
-O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive, da senha e dos outros hosts (Proxmox, NAS) está em [`scripts/backup/README.md`](scripts/backup/README.md).
+O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive e da senha está em [`docs/backup.md`](docs/backup.md).
 
 Atualizações a partir do desktop:
 

@@ -1,6 +1,6 @@
 # Página de status (Gatus) em status.<domínio>. Fica no Pi para continuar
-# avisando mesmo com a VM fora do ar. Não grava nada no disco (histórico em
-# memória) e expõe /metrics para o Prometheus da VM.
+# avisando mesmo com o server fora do ar. Não grava nada no disco (histórico em
+# memória) e expõe /metrics para o Prometheus do server.
 #
 # Cada serviço do proxy (dionix.proxy.hosts) vira uma checagem HTTPS, feita
 # pelo próprio Nginx do Pi e resolvida pelo Technitium local.
@@ -46,10 +46,8 @@ in
       endpoints =
         lib.mapAttrsToList servico (lib.filterAttrs (name: _: name != "status") config.dionix.proxy.hosts)
         ++ [
-          (porta "pfSense" "10.0.76.1:443")
-          (porta "Proxmox" "10.42.1.20:8006")
-          (porta "NAS (NFS)" "10.0.76.6:2049")
-          (porta "VM server (SSH)" "10.0.76.8:22")
+          (porta "server (SSH)" "${config.dionix.homelab.server}:22")
+          (porta "server (FTP do Switch)" "${config.dionix.homelab.server}:21")
           {
             name = "DNS (Technitium)";
             group = "Servidores";

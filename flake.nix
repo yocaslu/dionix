@@ -11,6 +11,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Particionamento declarativo (discos e pool ZFS do server)
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Paletas base16 aplicadas aos aplicativos (home/desktop/themes.nix)
     stylix = {
       url = "github:nix-community/stylix/release-26.05";

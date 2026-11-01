@@ -3,7 +3,7 @@
 # antes de enviar, então o Drive só vê blocos cifrados.
 #
 # Segredos (fora do repositório, criados à mão em cada host):
-#   /var/lib/secrets/rclone.conf      remote "gdrive" (gerado com `rclone config`, veja o README)
+#   /var/lib/secrets/rclone.conf      remote "gdrive" (gerado com `rclone config`, veja docs/backup.md)
 #   /var/lib/secrets/restic-password  senha do repositório: guarde uma cópia fora do homelab!
 #
 # Comandos (wrapper com as variáveis já definidas):

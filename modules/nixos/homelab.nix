@@ -11,12 +11,12 @@
     pi = lib.mkOption {
       type = lib.types.str;
       default = "10.42.1.2";
-      description = "Raspberry Pi: proxy reverso, DNS, TURN e LDAP.";
+      description = "Raspberry Pi: proxy reverso, DNS e LDAP.";
     };
     server = lib.mkOption {
       type = lib.types.str;
-      default = "10.0.76.8";
-      description = "VM de serviços (host `server`), na LAN do pfSense.";
+      default = "10.42.1.20";
+      description = "Host `server` (NixOS direto no hardware), na rede de casa.";
     };
   };
 }

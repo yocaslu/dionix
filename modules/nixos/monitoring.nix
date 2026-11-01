@@ -1,11 +1,10 @@
-# Prometheus + Grafana. Fica na VM (o Prometheus grava o tempo todo, o que
+# Prometheus + Grafana. Fica no server (o Prometheus grava o tempo todo, o que
 # desgastaria o cartão SD do Pi); a página de status (Gatus) fica no Pi.
 #
 #   grafana.<domínio>  :3000   painéis; o Prometheus já vem como fonte de dados
 #   Prometheus         :9090   só local (consultado pelo Grafana)
 #
 # Painel pronto para os hosts: Dashboards → New → Import → ID 1860 (Node Exporter Full).
-# Proxmox e NAS (Debian): `apt install prometheus-node-exporter` para aparecerem também.
 {
   config,
   lib,
@@ -40,13 +39,18 @@ in
             targets = [ (node pi) ];
             labels.host = "pi";
           }
+        ];
+      }
+      {
+        # Pool ZFS (estado, espaço, erros) e saúde dos discos (SMART)
+        job_name = "discos";
+        static_configs = [
           {
-            targets = [ (node "10.42.1.20") ];
-            labels.host = "proxmox";
-          }
-          {
-            targets = [ (node "10.0.76.6") ];
-            labels.host = "nas";
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.exporters.zfs.port}"
+              "127.0.0.1:${toString config.services.prometheus.exporters.smartctl.port}"
+            ];
+            labels.host = "server";
           }
         ];
       }

@@ -1,18 +1,17 @@
 # FTP somente leitura com os jogos do Switch, para o console instalar pela
-# rede de casa. Fica no Pi porque o Switch está na 10.42.1.0/24 e só o Pi,
-# nessa rede, tem rota para o NAS (a VM e o NAS ficam atrás do pfSense).
+# rede de casa (10.42.1.0/24, a mesma do server).
 #
-#   Pasta:   games/switch do compartilhamento "data" do NAS, montada só
-#            leitura em /srv/switch (o qBittorrent baixa nela, na VM)
-#   Acesso:  ftp://10.42.1.2, porta 21, usuário "switch" (passivo nas 50000-50019)
+#   Pasta:   /srv/data/games/switch (o qBittorrent baixa nela; o Nextcloud mostra
+#            a mesma pasta como "Jogos do Switch")
+#   Acesso:  ftp://10.42.1.20, porta 21, usuário "switch" (passivo nas 50000-50019)
 #            liberado só para a rede de casa
 #
 # A senha do usuário fica fora do repositório (hash SHA-512):
 #   mkpasswd -m sha-512 | sudo install -Dm600 /dev/stdin /var/lib/secrets/switch-ftp.hash
 # e aplique de novo (nixos-rebuild) para o usuário receber a senha.
-{ lib, ... }:
+{ config, lib, ... }:
 let
-  games = "/srv/switch";
+  games = "${config.dionix.storage.data}/games/switch";
   lan = "10.42.1.0/24";
   pasv = {
     from = 50000;
@@ -29,14 +28,7 @@ let
       ];
 in
 {
-  imports = [ ./nas.nix ];
-
-  # O NAS precisa exportar /data também para o Pi (10.42.1.2), só leitura
-  dionix.nas.shares.switch = {
-    path = "/data/games/switch";
-    mountPoint = games;
-    readOnly = true;
-  };
+  imports = [ ./storage.nix ];
 
   users.users.switch = {
     isSystemUser = true;

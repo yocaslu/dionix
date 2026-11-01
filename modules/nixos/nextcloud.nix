@@ -1,21 +1,20 @@
 # Nextcloud nativo, com Collabora (documentos), Whiteboard e Talk com o
 # High Performance Backend (servidor de sinalização + Janus para as chamadas).
-# O Pi publica tudo com HTTPS; aqui os serviços falam HTTP na LAN do pfSense.
+# O Pi publica tudo com HTTPS; aqui os serviços falam HTTP na rede de casa.
 #
 #   nextcloud.<domínio>   Nginx deste host → PHP-FPM (Postgres e Redis locais)
 #   collabora.<domínio>   coolwsd :9980
 #   whiteboard.<domínio>  servidor do Whiteboard :3002
 #   talk.<domínio>        sinalização do Talk :8095 → Janus (só local, :8188)
-#   TURN                  coturn no Pi (talk-turn.nix): os clientes da rede de casa
-#                         e da tailnet chegam às chamadas por ele
+#   Chamadas              mídia direto com o Janus (UDP 20000-20200): o server está na
+#                         rede de casa, e a tailnet chega a ele pela rota do Pi
 #
-# Os arquivos dos usuários ficam no NAS (compartilhamento "nextcloud", montado em
-# /var/lib/nextcloud/data); configuração, apps e banco ficam no disco da VM.
-# A pasta de jogos do Switch (games/switch do compartilhamento "data") aparece
+# Os arquivos dos usuários ficam no dataset ZFS tank/nextcloud (montado em
+# /var/lib/nextcloud/data); configuração, apps e banco ficam no disco do sistema.
+# A pasta de jogos do Switch (games/switch do dataset tank/data) aparece
 # como armazenamento externo "Jogos do Switch" para o grupo admin.
 #
 # Segredos: gerados no primeiro boot em /var/lib/secrets (nextcloud-secrets.service).
-# Só o turn-secret é compartilhado: copie-o para /var/lib/secrets/turn-secret no Pi.
 {
   config,
   lib,
@@ -28,7 +27,7 @@ let
   occ = lib.getExe nc.occ;
   url = name: "https://${name}.${domain}";
   secrets = "/var/lib/secrets";
-  jogos = "/mnt/nas/data/games/switch";
+  jogos = "${config.dionix.storage.data}/games/switch";
 
   # Portas das chamadas (WebRTC) do Janus
   rtpPorts = {
@@ -96,21 +95,14 @@ in
 {
   imports = [
     ./homelab.nix
-    ./nas.nix
+    ./storage.nix
   ];
 
-  # Arquivos dos usuários no NAS; o UID fixo bate com o dono da pasta lá
-  dionix.nas.shares.nextcloud = {
-    path = "/nextcloud";
-    mountPoint = "${nc.home}/data";
-  };
+  # Arquivos dos usuários no dataset tank/nextcloud (montado em /var/lib/nextcloud/data)
   users.users.nextcloud = {
-    uid = 2001;
     # Lê e organiza a pasta de jogos baixados pelo qBittorrent
     extraGroups = [ "media" ];
   };
-  users.groups.nextcloud.gid = 2001;
-
   services.nextcloud = {
     enable = true;
     package = pkgs.nextcloud35;
@@ -144,15 +136,13 @@ in
       default_phone_region = "BR";
       # Tarefas pesadas de madrugada (UTC)
       maintenance_window_start = 6;
-      # Os dados ficam no NFS, onde as permissões são do NAS
-      check_data_directory_permissions = false;
       # Login pelo lldap: ative o app "LDAP user and group backend" e configure
       # em Administração → LDAP/AD (dados no README)
     };
     phpOptions."opcache.interned_strings_buffer" = "32";
   };
 
-  # O setup e o PHP só sobem com o NAS montado
+  # O setup e o PHP só sobem com os datasets do ZFS montados
   systemd.services.nextcloud-setup.unitConfig.RequiresMountsFor = "${nc.home}/data";
   systemd.services.phpfpm-nextcloud.unitConfig.RequiresMountsFor = [
     "${nc.home}/data"
@@ -257,7 +247,6 @@ in
       gen talk-internal-secret 32
       gen talk-hashkey 32
       gen talk-blockkey 16          # 32 caracteres: chave AES-256
-      gen turn-secret 32            # o mesmo arquivo vai para o Pi (coturn)
       gen whiteboard.env 32 JWT_SECRET_KEY=
       chown nextcloud:nextcloud ${secrets}/nextcloud-admin-pass
     '';
@@ -288,20 +277,13 @@ in
       occ config:app:set whiteboard collabBackendUrl --value=${url "whiteboard"}
       occ config:app:set whiteboard jwt_secret_key --value="$(sed 's/^JWT_SECRET_KEY=//' ${secrets}/whiteboard.env)"
 
-      # Talk: sinalização própria, TURN/STUN no Pi (sem os servidores públicos)
+      # Talk: sinalização própria (o STUN padrão do Nextcloud continua)
       backend="$(cat ${secrets}/talk-backend-secret)"
       if ! occ talk:signaling:list --output=json | jq -e '.[] | select(.server == "${url "talk"}")' >/dev/null; then
         occ talk:signaling:add ${url "talk"} "$backend" --verify
       fi
-      if ! occ talk:turn:list --output=json | jq -e '.[] | select(.server == "${pi}:3478")' >/dev/null; then
-        occ talk:turn:add turn ${pi}:3478 udp,tcp --secret="$(cat ${secrets}/turn-secret)"
-      fi
-      if ! occ talk:stun:list --output=json | jq -e 'index("${pi}:3478")' >/dev/null; then
-        occ talk:stun:add ${pi}:3478
-      fi
-      occ talk:stun:delete stun.nextcloud.com:443 2>/dev/null || true
 
-      # Jogos do Switch como armazenamento externo (pasta local da VM, vinda do NAS)
+      # Jogos do Switch como armazenamento externo (pasta local, no dataset tank/data)
       occ app:enable files_external
       if ! occ files_external:list --output=json | jq -e '.[] | select(.mount_point == "/Jogos do Switch")' >/dev/null; then
         id="$(occ files_external:create "/Jogos do Switch" local null::null -c datadir=${jogos} | grep -o '[0-9]*$')"

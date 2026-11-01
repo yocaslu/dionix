@@ -1,13 +1,13 @@
 # Mídia e downloads: Jellyfin, Seerr (pedidos), suite Arr e qBittorrent.
-# Todos rodam no grupo "media" (GID 2000, o mesmo do NAS) com umask 002, então
+# Todos rodam no grupo "media" (GID 2000) com umask 002, então
 # o que um baixa os outros conseguem mover, renomear e ler.
 #
-# Caminhos dentro do compartilhamento "data" do NAS (/mnt/nas/data):
+# Caminhos dentro do dataset ZFS tank/data (/srv/data, criados pelo storage.nix):
 #   torrents/<categoria>   downloads do qBittorrent (categorias: filmes, series, musica, livros)
 #   media/<categoria>      biblioteca organizada pelos Arr, lida pelo Jellyfin
 #   games/switch           jogos do Switch: categoria "switch" do qBittorrent;
-#                          aparece no Nextcloud e no FTP do Pi (switch-ftp.nix)
-# Como os dois ficam no mesmo compartilhamento, a importação é por hardlink:
+#                          aparece no Nextcloud e no FTP (switch-ftp.nix)
+# Como torrents/ e media/ ficam no mesmo dataset, a importação é por hardlink:
 # o arquivo continua semeando sem ocupar espaço duas vezes.
 #
 #   jellyfin.<domínio>     :8096   biblioteca e streaming
@@ -24,7 +24,7 @@
 }:
 let
   inherit (config.dionix.homelab) domain pi;
-  data = "/mnt/nas/data";
+  data = config.dionix.storage.data;
 
   # Os Arr que organizam a biblioteca (o Prowlarr só cuida dos indexadores)
   arr = [
@@ -33,7 +33,7 @@ let
     "lidarr"
     "readarr"
   ];
-  # Serviços que escrevem na biblioteca: grupo media, arquivos 664/775 e o NAS montado
+  # Serviços que escrevem na biblioteca: grupo media, arquivos 664/775 e o pool montado
   mediaServices = arr ++ [
     "bazarr"
     "jellyfin"
@@ -43,18 +43,36 @@ in
 {
   imports = [
     ./homelab.nix
-    ./nas.nix
+    ./storage.nix
   ];
-
-  dionix.nas.shares.data.path = "/data";
 
   services = {
     jellyfin = {
       enable = true;
       group = "media";
       openFirewall = true;
-      # Transcodificação por hardware: passe a GPU (ou a iGPU) para a VM no Proxmox
-      # e ative `hardwareAcceleration` com o device /dev/dri/renderD128.
+      # Transcodificação na RX 580 (VA-API). Endereço PCI em vez de renderD128 porque a
+      # numeração muda se a iGPU também estiver ativa; confira com `ls /dev/dri/by-path`.
+      hardwareAcceleration = {
+        enable = true;
+        type = "vaapi";
+        device = "/dev/dri/by-path/pci-0000:01:00.0-render";
+      };
+      # O que a RX 580 (Polaris) faz por hardware: decodifica H.264 e HEVC de 8 e 10 bits,
+      # codifica H.264 e HEVC de 8 bits. VP9 e AV1 ficam com a CPU.
+      transcoding = {
+        enableHardwareEncoding = true;
+        hardwareDecodingCodecs = {
+          h264 = true;
+          hevc = true;
+          hevc10bit = true;
+          mpeg2 = true;
+          vc1 = true;
+        };
+        hardwareEncodingCodecs.hevc = true;
+      };
+      # Grava a configuração de transcodificação mesmo se já existir uma do painel
+      forceEncodingConfig = true;
     };
 
     seerr = {
@@ -113,6 +131,12 @@ in
     group = "media";
     openFirewall = true;
   });
+
+  # Acesso à placa de vídeo
+  users.users.jellyfin.extraGroups = [
+    "render"
+    "video"
+  ];
 
   systemd.services = lib.genAttrs mediaServices (_: {
     serviceConfig.UMask = lib.mkForce "0002";

@@ -26,8 +26,7 @@ in
       openFirewall = true;
       # Aplicado com `tailscale set` a cada boot, então vale mesmo sem auth key.
       # accept-dns=false: o Pi é o DNS da tailnet e não deve consultar a si mesmo pelo MagicDNS.
-      # accept-routes=false: as redes atrás do pfSense saem pela rota estática do host,
-      # não pela tailnet (as rotas do Tailscale teriam prioridade sobre ela).
+      # accept-routes=false: o Pi não usa rotas de outros nós; ele é quem anuncia a rede de casa
       extraSetFlags = [
         "--accept-dns=false"
         "--accept-routes=false"

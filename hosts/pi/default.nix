@@ -1,8 +1,8 @@
 # Raspberry Pi 4 do homelab (10.42.1.2): roteador do Tailscale, DNS
-# (Technitium), proxy reverso (Nginx), login central (lldap), TURN das chamadas
-# do Talk, FTP dos jogos do Switch, página de status e backup no Google Drive. Substitui o core-compose
-# (Traefik, Technitium e Portainer em Docker). Não tem hardware-configuration.nix:
-# a imagem SD já define os sistemas de arquivos (modules/nixos/raspberry-pi.nix).
+# (Technitium), proxy reverso (Nginx), login central (lldap), página de status e
+# backup no Google Drive. Substitui o core-compose (Traefik, Technitium e
+# Portainer em Docker). Não tem hardware-configuration.nix: a imagem SD já
+# define os sistemas de arquivos (modules/nixos/raspberry-pi.nix).
 {
   config,
   lib,
@@ -10,17 +10,9 @@
   ...
 }:
 let
-  # VM `server` (NixOS), na LAN do pfSense
-  vm = config.dionix.homelab.server;
-  em = port: "http://${vm}:${toString port}";
-
-  # IP da WAN do pfSense na rede de casa: as redes atrás dele são roteadas por
-  # aqui (sem NAT). Reserve esse IP no roteador da operadora e preencha.
-  pfsenseWan = null; # ex.: "10.42.1.4"
-  redesPfsense = [
-    "10.0.76.0/24" # LAN (VMs)
-    "10.0.21.0/24" # DEV
-  ];
+  # Host `server` (NixOS no hardware), na mesma rede de casa
+  server = config.dionix.homelab.server;
+  em = port: "http://${server}:${toString port}";
 in
 {
   imports = [
@@ -30,14 +22,14 @@ in
     ../../modules/nixos/dns-server.nix
     ../../modules/nixos/reverse-proxy.nix
     ../../modules/nixos/ldap.nix
-    ../../modules/nixos/talk-turn.nix
-    ../../modules/nixos/switch-ftp.nix
+    ../../modules/nixos/homelab.nix
     ../../modules/nixos/status.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
 
-  # Rede de casa anunciada para a tailnet (as do pfSense ele mesmo anuncia)
+  # Rede de casa anunciada para a tailnet: de fora, os serviços e o server são
+  # alcançados por aqui
   dionix.tailscaleRouter = {
     routes = [ "10.42.1.0/24" ];
     exitNode = true;
@@ -52,10 +44,8 @@ in
     # ldap.<domínio> vem do ldap.nix e status.<domínio> do status.nix
     hosts = {
       dns = "http://127.0.0.1:5380"; # painel do Technitium
-      proxmox = "https://10.42.1.20:8006";
-      pfsense = "https://10.0.76.1";
 
-      # VM server: Nextcloud e companhia (nextcloud.nix)
+      # server: Nextcloud e companhia (nextcloud.nix)
       nextcloud = {
         upstream = em 80;
         largeUploads = true;
@@ -65,7 +55,7 @@ in
       whiteboard = em 3002;
       talk = em 8095;
 
-      # VM server: mídia (media.nix)
+      # server: mídia (media.nix)
       jellyfin = em 8096;
       pedidos = em 5055; # Seerr
       sonarr = em 8989;
@@ -76,24 +66,9 @@ in
       bazarr = em 6767;
       qbittorrent = em 8081;
 
-      # VM server: monitoramento (monitoring.nix)
+      # server: monitoramento (monitoring.nix)
       grafana = em 3000;
     };
-  };
-
-  # Rota para as redes atrás do pfSense, aplicada quando a rede sobe
-  systemd.services.rotas-pfsense = lib.mkIf (pfsenseWan != null) {
-    description = "Rotas para as redes atrás do pfSense";
-    wantedBy = [ "multi-user.target" ];
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
-    path = [ pkgs.iproute2 ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = lib.concatMapStrings (rede: "ip route replace ${rede} via ${pfsenseWan}\n") redesPfsense;
-    preStop = lib.concatMapStrings (rede: "ip route del ${rede} || true\n") redesPfsense;
   };
 
   # Backup diário no Google Drive (gdrive:homelab/pi)

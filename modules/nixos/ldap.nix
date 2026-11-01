@@ -1,5 +1,5 @@
 # Login central com o lldap: um servidor LDAP leve só para autenticação
-# (usuários e grupos), usado por Nextcloud, Portainer, pfSense, Proxmox etc.
+# (usuários e grupos), usado pelo Nextcloud, Jellyfin, Grafana etc.
 #
 #   Painel web: ldap.<domínio> (pelo proxy) — usuários, grupos e senhas
 #   LDAP:       ldaps://ldap.<domínio>:6360 (com o certificado curinga do ACME)
@@ -59,6 +59,6 @@ in
 
   dionix.proxy.hosts.ldap = "http://127.0.0.1:17170";
 
-  # LDAP para a rede de casa, a tailnet e as VMs atrás do pfSense
+  # LDAP para a rede de casa e a tailnet
   networking.firewall.allowedTCPPorts = [ 3890 ] ++ lib.optional tls 6360;
 }
