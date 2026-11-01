@@ -6,7 +6,7 @@ Todos os hosts fazem backup com **restic** num repositório próprio dentro de `
 |---|---|---|
 | `pi` (NixOS) | `modules/nixos/backup.nix` | Technitium, lldap, certificados, Tailscale, segredos |
 | `server` e outros NixOS | `modules/nixos/backup.nix` (defina `dionix.backup.paths`) | o que o host declarar |
-| VM `production` (Ubuntu) | a ferramenta de backup do Nextcloud (`services-compose`) ou este script | dados do Nextcloud + dump do Postgres |
+| VM `production` (Ubuntu) | [`nxctl snapshot`](https://github.com/yocaslu/nxctl) | dados do Nextcloud + dump do Postgres |
 | NAS (OpenMediaVault) | este script | pastas compartilhadas |
 | Proxmox | este script | `/etc/pve` + backups das VMs (vzdump) |
 
@@ -75,14 +75,14 @@ BACKUP_EXCLUDES="*.tmp .recycle"
 
 ### VM production (Nextcloud)
 
-A ferramenta em `services-compose/services/nextcloud` já usa o restic pelo `RESTIC_REPOSITORY`. Basta apontar para o Drive no `.env` e deixar o rclone configurado para o root:
+O [`nxctl`](https://github.com/yocaslu/nxctl) já faz o backup consistente: liga o modo de manutenção, faz o dump do Postgres e manda os dados para o restic. Basta apontar o repositório para o Drive no `.env` dele e deixar o rclone configurado para o root:
 
 ```sh
 RESTIC_REPOSITORY=rclone:gdrive:homelab/production
 # rclone.conf em /root/.config/rclone/rclone.conf
 ```
 
-Ou use este script com um `pre.sh` que chama o dump do Postgres e `BACKUP_PATHS="/mnt/nextcloud /mnt/backup/postgres"`.
+Agende o `nxctl snapshot` com um timer do systemd (copie `restic-gdrive.service`/`.timer` trocando o `ExecStart`).
 
 ## Restaurar
 
