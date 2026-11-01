@@ -3,7 +3,12 @@
 #   nix build .#packages.aarch64-linux.pi-image
 #   zstdcat result/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 # Depois de instalado, as atualizações saem do próprio flake (veja o README).
-{ lib, modulesPath, ... }:
+{
+  lib,
+  modulesPath,
+  options,
+  ...
+}:
 {
   imports = [ (modulesPath + "/installer/sd-card/sd-image-aarch64.nix") ];
 
@@ -25,4 +30,13 @@
     SystemMaxUse=100M
   '';
   systemd.coredump.enable = false;
+
+  # O Pi não tem relógio de bateria: liga com a hora errada, e com ela o DNSSEC do
+  # Technitium falha ("SignatureNotYetValid") e nada resolve, nem o servidor de NTP.
+  # Servidores por IP quebram esse ciclo; o timesyncd ainda guarda a última hora no disco.
+  networking.timeServers = [
+    "162.159.200.1" # time.cloudflare.com
+    "162.159.200.123"
+  ]
+  ++ options.networking.timeServers.default;
 }
