@@ -4,10 +4,19 @@ Todos os serviços rodam nativos no NixOS, sem containers, em dois hosts:
 
 | Host | Onde | O que roda |
 |---|---|---|
-| `pi` | Raspberry Pi 4, `10.42.1.2` (rede de casa) | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), TURN do Talk (coturn), página de status (Gatus), roteador Tailscale |
+| `pi` | Raspberry Pi 4, `10.42.1.2` (rede de casa) | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), TURN do Talk (coturn), página de status (Gatus), roteador Tailscale da rede de casa (`10.42.1.0/24`) e exit node |
 | `server` | VM no Proxmox, `10.0.76.8` (LAN do pfSense) | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, NUT, Prometheus + Grafana |
 
 Os arquivos grandes (mídia, downloads, jogos, dados do Nextcloud) ficam no NAS (OpenMediaVault, `10.0.76.6`) e chegam à VM por NFS.
+
+Na tailnet, cada rede tem o seu roteador:
+
+| Rede | Quem anuncia | Configuração |
+|---|---|---|
+| `10.42.1.0/24` (casa: Pi, Proxmox, roteador da operadora) | Tailscale do **Pi** | `dionix.tailscaleRouter.routes` em `hosts/pi/default.nix` |
+| `10.0.76.0/24` (LAN: VMs e NAS) e `10.0.21.0/24` (DEV) | Tailscale do **pfSense** | pacote Tailscale do pfSense |
+
+Aprove as rotas de cada um no painel do Tailscale (*Machines → … → Edit route settings*).
 
 ```
 cliente ──HTTPS──▶ Pi (Nginx, *.vault76.com.br) ──HTTP──▶ VM server ──NFS──▶ NAS
