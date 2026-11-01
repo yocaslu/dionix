@@ -170,6 +170,6 @@ Ficaram de fora: as configs legadas de i3/X11 (`.xinitrc`, `.xmmp.sh`, `.screenl
 
 - [ ] Gerar os `hardware-configuration.nix` reais em cada máquina.
 - [ ] Preencher `user.name` e `user.email` em `home/cli/git.nix`.
-- [ ] Adicionar as chaves SSH públicas em `modules/nixos/common.nix`.
+- [x] Adicionar as chaves SSH públicas em `modules/nixos/common.nix`.
 - [ ] Definir a senha do usuário (`passwd`) depois da instalação.
 - [ ] Conferir os temas do catppuccin/tmux: a versão do nixpkgs é a v2, que renomeou algumas opções `@catppuccin_*`.
