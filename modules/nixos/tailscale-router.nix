@@ -26,11 +26,11 @@ in
       openFirewall = true;
       # Aplicado com `tailscale set` a cada boot, então vale mesmo sem auth key.
       # accept-dns=false: o Pi é o DNS da tailnet e não deve consultar a si mesmo pelo MagicDNS.
-      # accept-routes: chega às redes que o pfSense anuncia (10.0.76.0/24 e 10.0.21.0/24),
-      # que ficam atrás do NAT dele, para o proxy alcançar os serviços das VMs.
+      # accept-routes=false: as redes atrás do pfSense saem pela rota estática do host,
+      # não pela tailnet (as rotas do Tailscale teriam prioridade sobre ela).
       extraSetFlags = [
         "--accept-dns=false"
-        "--accept-routes=true"
+        "--accept-routes=false"
         "--advertise-routes=${lib.concatStringsSep "," cfg.routes}"
         "--advertise-exit-node=${lib.boolToString cfg.exitNode}"
       ];

@@ -4,7 +4,7 @@ Guia para o Claude trabalhar neste repositório.
 
 ## O que é
 
-Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `desktop`, `server` (VM Proxmox com Docker) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium e proxy Nginx, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
+Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `desktop`, `server` (VM Proxmox com Docker) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium, proxy Nginx, LDAP lldap e backup no Google Drive, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
 
 ## Onde mexer
 
@@ -12,6 +12,7 @@ Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `desktop`,
 - Hosts: `hosts/<host>/default.nix` só escolhe papéis e boot. O `hardware-configuration.nix` do `desktop` é o real, gerado na máquina (já instalada); os de `notebook` e `server` ainda são provisórios; o `pi` não tem (a imagem SD define os discos). A arquitetura de cada host fica em `hosts` no `flake.nix`.
 - Configs do usuário: `home/cli` (terminal, todas as máquinas) e `home/desktop` (gráfico).
 - Dados convertidos dos dotfiles ficam em `home/*/settings/*.nix` (attrsets, ou funções de `colors` quando usam a paleta); arquivos que não viram Nix (CSS, Lua, scripts, módulos zsh) ficam em `home/*/files/`.
+- Backup: hosts NixOS usam `modules/nixos/backup.nix` (`dionix.backup.paths`); os demais (Proxmox, NAS, VMs Ubuntu) usam `scripts/backup/restic-gdrive.sh`.
 - Pacotes do unstable: `pkgs.unstable.<nome>` (overlay em `overlays/default.nix`).
 
 ## Convenções

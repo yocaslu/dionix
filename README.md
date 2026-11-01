@@ -7,7 +7,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
 | `server` | VM no Proxmox do homelab | base + VM Proxmox + host Docker |
-| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) |
+| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + backup |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
 
@@ -31,6 +31,8 @@ modules/nixos/
   tailscale-router.nix     subnet router e exit node da tailnet
   dns-server.nix           Technitium DNS Server (painel na 5380, só pelo proxy)
   reverse-proxy.nix        Nginx: <nome>.<domínio> → serviço, HTTPS opcional (ACME DNS-01)
+  ldap.nix                 lldap: login central (LDAP/LDAPS + painel web)
+  backup.nix               restic diário para o Google Drive (rclone)
 home/
   cli/                     zsh, Bash, git, tmux, Neovim, Helix, Vim, yazi, btop…
   desktop/                 Sway, Waybar, menus, notificações, tema e apps
@@ -109,9 +111,25 @@ zstdcat result/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress co
 5. Abra o painel do Technitium (`ssh -L 5380:localhost:5380 dio@10.42.1.2` e `http://localhost:5380`), defina a senha de admin e os encaminhadores (1.1.1.1, 8.8.8.8), e crie a zona `vault76.com.br` com um registro `*` (A) para `10.42.1.2`. A partir daí o painel também fica em `https://dns.vault76.com.br`.
 6. Aponte o DNS do DHCP do roteador para o Pi, se quiser que a rede toda use o Technitium.
 
-Os serviços do proxy ficam em `dionix.proxy.hosts` (`hosts/pi/default.nix`): uma entrada pode ser só o endereço ou ter rotas extras, uploads grandes e HSTS (veja o exemplo do Nextcloud). O certificado é um curinga `*.vault76.com.br`, renovado sozinho pelo `security.acme`.
+#### Acesso às VMs (rota pelo pfSense)
 
-Se o Nextcloud passar a ser servido pelo Pi, inclua `10.42.1.2` no `TRUSTED_PROXIES` do `.env` dele.
+O Pi fica na rede de casa e as VMs atrás do pfSense. Em vez de NAT por serviço, o Pi tem uma rota para `10.0.76.0/24` e `10.0.21.0/24` pela WAN do pfSense:
+
+1. Reserve um IP fixo para a WAN do pfSense no roteador da operadora e preencha `pfsenseWan` em `hosts/pi/default.nix`.
+2. No pfSense, em *Firewall → Rules → WAN*, libere a origem `10.42.1.2` para *LAN net* e *DEV net*. *Block private networks* precisa ficar desligado na WAN.
+3. Para abrir o painel do pfSense pelo proxy (`pfsense.vault76.com.br`), adicione esse nome em *System → Advanced → Alternate Hostnames* (senão o pfSense acusa DNS rebind).
+4. No Nextcloud, troque o `TRUSTED_PROXIES` por `10.42.1.2`: com a rota, o Nextcloud vê o IP real do Pi.
+5. Desligue *Accept Routes* no Tailscale do pfSense: ele aceitaria a `10.42.1.0/24` que o Pi anuncia, que é a rede da própria WAN.
+
+Os serviços do proxy ficam em `dionix.proxy.hosts`: uma entrada pode ser só o endereço ou ter rotas extras, uploads grandes e HSTS (veja o Nextcloud). O certificado é um curinga `*.vault76.com.br`, renovado sozinho pelo `security.acme`.
+
+#### Login central (lldap)
+
+Antes do primeiro boot com o LDAP, crie a senha do admin: `sudo install -Dm600 /dev/stdin /var/lib/secrets/lldap-admin-pass <<< 'senha-forte'`. O painel fica em `https://ldap.vault76.com.br`. Os serviços usam `ldaps://ldap.vault76.com.br:6360` com base `dc=vault76,dc=com,dc=br`; crie um usuário só para o bind de cada serviço, no grupo `lldap_strict_readonly`.
+
+#### Backup
+
+O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive, da senha e dos outros hosts (Proxmox, NAS e VM `production`) está em [`scripts/backup/README.md`](scripts/backup/README.md).
 
 Atualizações a partir do desktop:
 
