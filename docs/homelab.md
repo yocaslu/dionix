@@ -43,31 +43,68 @@ No roteador da operadora, reserve por DHCP:
 | `10.42.1.2` | Pi |
 | `10.42.1.20` | server: o **MAC do adaptador USB Gigabit** (o server pega IP por DHCP em qualquer porta Ethernet) |
 
-## 2. Instalar o server (nixos-anywhere)
+## 2. Instalar o server (HD gravado no desktop)
 
-A instalação roda do desktop, por SSH, sem pendrive: o `nixos-anywhere` entra no sistema atual (o Proxmox), troca para um instalador em memória, particiona os discos pelo `hosts/server/disko.nix` e instala o flake.
+O server não instala a si mesmo: o HD de 500 GB é gravado no desktop, ligado por SATA, com o `server-bootstrap` (só rede e SSH). O HD é de 3,5" e precisa de 12 V, então não funciona num adaptador USB simples no notebook. Com o HD de volta no server, o pool é criado lá e a configuração completa é aplicada por SSH. Os serviços só sobem depois que o pool existe.
 
-> **Apaga os três discos** (o Proxmox, as VMs e os dois HDs de 1 TB).
+> **Apaga o HD de 500 GB (passo 2) e os dois HDs de 1 TB (passo 4).** Tudo que estiver neles se perde.
 
-1. **Confira os discos.** No Proxmox, `ls -l /dev/disk/by-id/ | grep -v part` e troque em `hosts/server/disko.nix` os `/dev/sdX` pelos IDs (`/dev/disk/by-id/ata-…`): o de 500 GB em `sistema`, os dois de 1 TB em `espelho`. Os nomes `sdX` podem mudar no instalador; os IDs não.
-2. **Placa de vídeo.** Com a RX 580 instalada, confira o endereço dela (`lspci | grep VGA`, costuma ser `01:00.0`) e, se for outro, ajuste o `device` do Jellyfin em `modules/nixos/media.nix`.
-3. **Instale**, do desktop:
+**No desktop:**
+
+1. **Chave SSH.** A máquina de onde você administra precisa entrar no server. Confira se a chave dela (`cat ~/.ssh/*.pub`) está em `openssh.authorizedKeys.keys`, no `modules/nixos/common.nix`; se não estiver, crie uma (`ssh-keygen -t ed25519`) e adicione a pública.
+
+2. **Grave o HD.** Com o desktop desligado, ligue o HD na SATA. Depois, ache o ID dele pelo tamanho e pelo modelo, e use sempre o caminho `by-id`:
 
    ```sh
-   nix run github:nix-community/nixos-anywhere -- \
-     --flake .#server \
-     --generate-hardware-config nixos-generate-config hosts/server/hardware-configuration.nix \
-     root@10.42.1.20
+   lsblk -o NAME,SIZE,TRAN,MODEL,SERIAL          # ~465G
+   ls -l /dev/disk/by-id/ | grep ata-
+
+   sudo nix run github:nix-community/disko/latest#disko-install -- \
+     --flake .#server-bootstrap \
+     --disk sistema /dev/disk/by-id/ata-…
    ```
 
-   O `--generate-hardware-config` sobrescreve `hosts/server/hardware-configuration.nix` com o que detectar: mantenha os módulos dos adaptadores USB (`r8152`, `ax88179_178a`) e apague eventuais `fileSystems` (vêm do disko). Faça commit do arquivo.
+   O flake só enxerga arquivos no git: dê `git add` no que for novo antes de gravar. Desligue o desktop e passe o HD para o server.
 
-4. Se a máquina não voltar à rede, ligue monitor e teclado: o sistema está no ar e dá para ver o problema localmente (`journalctl -b`).
+**No server**, com o HD na SATA, o firmware em modo UEFI (CSM desligado) e o HD como primeiro no boot, depois de reservar o IP (seção 1):
 
-Atualizações depois, a partir do desktop:
+3. **Primeiro acesso e senha.** Se a máquina não aparecer na rede, ligue monitor e teclado: o login local pede senha, que ainda não existe, então regrave o HD ou use um pendrive do NixOS para investigar.
+
+   ```sh
+   ssh -t dio@10.42.1.20 sudo passwd dio
+   ```
+
+   Faça isso antes do passo 5: o `.#server` volta a pedir a senha no sudo.
+
+4. **Crie o pool.** Veja os IDs e os coloque em `hosts/server/tank.nix`. Confira os tamanhos: os de 1 TB, nunca o de 500 GB.
+
+   ```sh
+   ssh dio@10.42.1.20 'lsblk -o NAME,SIZE,MODEL,SERIAL; ls -l /dev/disk/by-id/ | grep -v part'
+   ```
+
+   Depois, da máquina de administração (o disko mostra os discos e pede confirmação; o `--override-input` usa o ZFS do próprio sistema):
+
+   ```sh
+   scp hosts/server/tank.nix dio@10.42.1.20:
+   ssh -t dio@10.42.1.20 'sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko/latest --override-input nixpkgs nixpkgs -- --mode destroy,format,mount tank.nix && sudo zpool export tank'
+   ```
+
+5. **Ajustes da máquina.** Compare a detecção real com `hosts/server/hardware-configuration.nix` e traga o que faltar (sem `fileSystems`/`swapDevices`). Com a RX 580 instalada, confira o endereço dela (`lspci | grep VGA`, costuma ser `01:00.0`) e, se for outro, ajuste o `device` do Jellyfin em `modules/nixos/media.nix`.
+
+   ```sh
+   ssh dio@10.42.1.20 'nixos-generate-config --show-hardware-config; lspci | grep VGA'
+   ```
+
+6. **Aplique a configuração completa**, da máquina de administração, e faça commit dos IDs e dos ajustes:
+
+   ```sh
+   nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo --ask-sudo-password
+   ```
+
+Atualizações depois, de qualquer máquina com a chave SSH:
 
 ```sh
-nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo
+nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo --ask-sudo-password
 ```
 
 ## 3. Primeiro boot

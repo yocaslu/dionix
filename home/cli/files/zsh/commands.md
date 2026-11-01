@@ -199,6 +199,12 @@ Troca a paleta de cores sem rebuild (só em notebook e desktop).
 Uso: `theme` abre o menu (também em Super+x m) · `theme nord` aplica direto.
 Temas: `catppuccin-mocha`, `gruvbox-dark-medium`, `nord`, `tokyo-night-dark`.
 
+## ssh-key-restore
+Instala em `~/.ssh` a chave SSH desta máquina, guardada no cofre do Bitwarden (só em notebook e desktop).
+
+Uso: rode `rbw unlock` e depois `ssh-key-restore` (usa a entrada com o nome da máquina)
+ou `ssh-key-restore notebook`. Nunca sobrescreve uma chave existente.
+
 ## wall
 Troca o papel de parede (awww) com transição.
 

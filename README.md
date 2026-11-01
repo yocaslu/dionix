@@ -79,7 +79,7 @@ Depois do primeiro boot, commite o `hardware-configuration.nix` gerado em `~/rep
    sudo nixos-generate-config --show-hardware-config > hosts/notebook/hardware-configuration.nix
    ```
 
-   O `hardware-configuration.nix` que está no repositório é **provisório**: serve só para o flake avaliar. Use `hosts/desktop/` no desktop.
+   Os `hardware-configuration.nix` do notebook e do desktop no repositório são os dessas máquinas: regenere se reinstalar ou formatar os discos (os UUIDs mudam). Use `hosts/desktop/` no desktop.
 
 3. Aplique (o flake precisa estar no git, inclusive o hardware-configuration novo):
 
@@ -94,7 +94,7 @@ Se os dotfiles do chezmoi já estiverem aplicados em `~`, o Home Manager renomei
 
 ### Servidor
 
-Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos dois HDs de 1 TB, declarados em `hosts/server/disko.nix`. A instalação roda do desktop com o [`nixos-anywhere`](https://github.com/nix-community/nixos-anywhere), por SSH, sem pendrive. O passo a passo (rede, discos, instalação e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
+Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos dois HDs de 1 TB, declarados em `hosts/server/disko.nix` e `hosts/server/tank.nix`. O HD do sistema é gravado no desktop, ligado por SATA, com um sistema mínimo (`server-bootstrap`); o resto é aplicado por SSH, com o HD já no server. O passo a passo (rede, discos, instalação e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
 
 Atualizações a partir do desktop:
 
@@ -170,6 +170,6 @@ Ficaram de fora: as configs legadas de i3/X11 (`.xinitrc`, `.xmmp.sh`, `.screenl
 
 - [ ] Gerar os `hardware-configuration.nix` reais em cada máquina.
 - [ ] Preencher `user.name` e `user.email` em `home/cli/git.nix`.
-- [ ] Adicionar as chaves SSH públicas em `modules/nixos/common.nix`.
+- [x] Adicionar as chaves SSH públicas em `modules/nixos/common.nix`.
 - [ ] Definir a senha do usuário (`passwd`) depois da instalação.
 - [ ] Conferir os temas do catppuccin/tmux: a versão do nixpkgs é a v2, que renomeou algumas opções `@catppuccin_*`.

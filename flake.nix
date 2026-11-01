@@ -55,6 +55,8 @@
         notebook = "x86_64-linux";
         desktop = "x86_64-linux";
         server = "x86_64-linux";
+        # Sistema mínimo gravado no HD do server pelo desktop (docs/homelab.md)
+        server-bootstrap = "x86_64-linux";
         pi = "aarch64-linux";
       };
 
@@ -97,6 +99,19 @@
             bash ${./home/desktop/files/theme/theme-test.sh} ${./home/desktop/files/theme/theme.sh}
             touch $out
           '';
+          # Testes do comando `ssh-key-restore`
+          ssh-key-restore =
+            pkgs.runCommand "ssh-key-restore-test"
+              {
+                nativeBuildInputs = with pkgs; [
+                  jq
+                  openssh
+                ];
+              }
+              ''
+                bash ${./home/desktop/files/ssh-key-restore/ssh-key-restore-test.sh} ${./home/desktop/files/ssh-key-restore/ssh-key-restore.sh}
+                touch $out
+              '';
         };
     };
 }
