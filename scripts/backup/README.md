@@ -93,6 +93,8 @@ sudo restic-gdrive.sh restore latest --target /tmp/restore --include /etc/pve
 sudo restic-gdrive.sh mount /mnt/restic                       # navegar pelos snapshots
 ```
 
-## Cota
+## Espaço
 
-A conta gratuita do Google tem 15 GB, divididos com Gmail e Fotos. Os backups das VMs e do NAS passam disso rápido: confira o tamanho com `restic stats --mode raw-data` depois do primeiro backup e, se precisar, assine um plano do Google One ou deixe as VMs grandes fora do job do Proxmox.
+A conta tem 5 TB. Acompanhe o uso real (já deduplicado e comprimido) com `restic stats --mode raw-data` em cada host. O que mais pesa são os dumps das VMs no Proxmox e os compartilhamentos do NAS; sem compressão no vzdump, o restic só sobe o que mudou de um dia para o outro.
+
+O Google Drive limita uploads a 750 GB por dia por conta: o primeiro backup do NAS e das VMs pode levar mais de um dia. O restic retoma de onde parou na execução seguinte.
