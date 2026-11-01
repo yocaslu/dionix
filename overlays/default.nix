@@ -1,8 +1,11 @@
 # Overlay do dionix.
 #   pkgs.unstable.<pacote>  pacote do nixos-unstable, para casos pontuais
 #   pkgs.tmuxPlugins.ping / .cargo  plugins do tmux que não estão no nixpkgs
+#   pkgs.nut                        servidor de títulos do Switch (pkgs/nut)
 { inputs }:
 final: prev: {
+  nut = final.callPackage ../pkgs/nut/package.nix { };
+
   unstable = import inputs.nixpkgs-unstable {
     inherit (final.stdenv.hostPlatform) system;
     config.allowUnfree = true;

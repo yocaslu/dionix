@@ -30,6 +30,16 @@ let
       };
       largeUploads = lib.mkEnableOption "uploads grandes e conexões longas (Nextcloud e afins)";
       hsts = lib.mkEnableOption "o cabeçalho HSTS (só com HTTPS)";
+      basicAuthFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "/var/lib/secrets/nut.htpasswd";
+        description = ''
+          Arquivo htpasswd para pedir usuário e senha antes do serviço (para os que
+          não têm login próprio). Fica fora do repositório e precisa ser legível pelo
+          grupo nginx: `htpasswd -c arquivo usuário` e `chgrp nginx arquivo`.
+        '';
+      };
       extraConfig = lib.mkOption {
         type = lib.types.lines;
         default = "";
@@ -75,6 +85,7 @@ let
         forceSSL = true;
         useACMEHost = cfg.domain;
       }
+      // lib.optionalAttrs (h.basicAuthFile != null) { inherit (h) basicAuthFile; }
     );
 in
 {

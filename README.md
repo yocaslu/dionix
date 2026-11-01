@@ -6,8 +6,8 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
-| `server` | VM no Proxmox do homelab | base + VM Proxmox + host Docker |
-| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + backup |
+| `server` | VM no Proxmox do homelab (10.0.76.8) | base + VM Proxmox + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + NUT + Prometheus/Grafana, tudo nativo |
+| `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + TURN + status (Gatus) + backup |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
 
@@ -18,14 +18,16 @@ O ambiente gráfico é o mesmo dos meus [dotfiles](https://github.com/yocaslu/do
 ```
 flake.nix                  hosts, inputs e o `nix flake check`
 flake.lock                 versões fixadas (nixpkgs, home-manager, plugins)
-overlays/default.nix       pkgs.unstable e plugins do tmux que não estão no nixpkgs
+overlays/default.nix       pkgs.unstable, plugins do tmux e pacotes próprios (pkgs/)
+pkgs/nut/                  NUT (servidor de títulos do Switch), que não está no nixpkgs
+docs/homelab.md            passo a passo dos serviços do homelab (rede, NAS, painéis)
 hosts/<host>/              default.nix (papéis do host) + hardware-configuration.nix
 modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
   desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
-  docker-host.nix          Docker, limpeza automática, oci-containers
+  docker-host.nix          Docker, limpeza automática, oci-containers (sem uso: tudo é nativo)
   proxmox-vm.nix           agente QEMU, console serial, GRUB
   raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão
   tailscale-router.nix     subnet router e exit node da tailnet
@@ -33,6 +35,15 @@ modules/nixos/
   reverse-proxy.nix        Nginx: <nome>.<domínio> → serviço, HTTPS opcional (ACME DNS-01)
   ldap.nix                 lldap: login central (LDAP/LDAPS + painel web)
   backup.nix               restic diário para o Google Drive (rclone)
+  homelab.nix              domínio e IPs do homelab, usados pelos papéis abaixo
+  nas.nix                  compartilhamentos NFS do NAS, grupo media
+  nextcloud.nix            Nextcloud + Collabora + Whiteboard + Talk (sinalização + Janus)
+  talk-turn.nix            coturn (TURN das chamadas), no Pi
+  media.nix                Jellyfin, Seerr, suite Arr, qBittorrent
+  switch-nut.nix           NUT para o Tinfoil
+  monitoring.nix           Prometheus + Grafana
+  node-exporter.nix        métricas dos hosts para o Prometheus
+  status.nix               página de status (Gatus), no Pi
 home/
   cli/                     zsh, Bash, git, tmux, Neovim, Helix, Vim, yazi, btop…
   desktop/                 Sway, Waybar, menus, notificações, tema e apps
@@ -82,14 +93,15 @@ Se os dotfiles do chezmoi já estiverem aplicados em `~`, o Home Manager renomei
 
 ### Servidor (VM no Proxmox)
 
-1. Crie a VM (SeaBIOS, disco SCSI/VirtIO, **QEMU Guest Agent** ativado) e instale o NixOS pela ISO mínima, com o disco em `/dev/sda`.
-2. Antes do primeiro `switch`, coloque sua chave SSH pública em `users.users.dio.openssh.authorizedKeys.keys` (`modules/nixos/common.nix`): o login por senha via SSH fica desativado.
-3. Gere o `hosts/server/hardware-configuration.nix` dentro da VM e aplique com `sudo nixos-rebuild switch --flake .#server`.
+Todos os serviços rodam nativos, sem containers. O passo a passo (rede, NAS, primeiro boot e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
 
-Depois da primeira instalação, dá para aplicar mudanças nos servidores a partir do notebook:
+1. Crie a VM (SeaBIOS, disco VirtIO, **QEMU Guest Agent** ativado) e instale o NixOS pela ISO mínima, com o disco em `/dev/sda`.
+2. Gere o `hosts/server/hardware-configuration.nix` dentro da VM e aplique com `sudo nixos-rebuild switch --flake .#server`.
+
+Depois da primeira instalação, dá para aplicar mudanças a partir do desktop:
 
 ```sh
-nixos-rebuild switch --flake .#server --target-host dio@<ip-do-servidor> --sudo
+nixos-rebuild switch --flake .#server --target-host dio@10.0.76.8 --sudo
 ```
 
 Para mais servidores, copie `hosts/server/` para `hosts/<nome>/` e adicione o nome (e a arquitetura) em `hosts` no `flake.nix`.
@@ -129,20 +141,13 @@ Antes do primeiro boot com o LDAP, crie a senha do admin: `sudo install -Dm600 /
 
 #### Backup
 
-O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive, da senha e dos outros hosts (Proxmox, NAS e VM `production`) está em [`scripts/backup/README.md`](scripts/backup/README.md).
+O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive, da senha e dos outros hosts (Proxmox, NAS) está em [`scripts/backup/README.md`](scripts/backup/README.md).
 
 Atualizações a partir do desktop:
 
 ```sh
 nixos-rebuild switch --flake .#pi --target-host dio@<ip-do-pi> --sudo
 ```
-
-#### Containers
-
-O `docker-host.nix` aceita as duas formas:
-
-- **docker compose como hoje**: copie os `docker-compose.yml` e rode `docker compose up -d`. O NixOS só cuida do sistema.
-- **declarados no Nix** (`virtualisation.oci-containers`, exemplo comentado no módulo): cada container vira um serviço systemd. O `compose2nix` converte os compose existentes.
 
 ## Uso diário
 

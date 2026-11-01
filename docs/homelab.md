@@ -1,0 +1,111 @@
+# Homelab: serviços nativos
+
+Todos os serviços rodam nativos no NixOS, sem containers, em dois hosts:
+
+| Host | Onde | O que roda |
+|---|---|---|
+| `pi` | Raspberry Pi 4, `10.42.1.2` (rede de casa) | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), TURN do Talk (coturn), página de status (Gatus), roteador Tailscale |
+| `server` | VM no Proxmox, `10.0.76.8` (LAN do pfSense) | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, NUT, Prometheus + Grafana |
+
+Os arquivos grandes (mídia, downloads, jogos, dados do Nextcloud) ficam no NAS (OpenMediaVault, `10.0.76.6`) e chegam à VM por NFS.
+
+```
+cliente ──HTTPS──▶ Pi (Nginx, *.vault76.com.br) ──HTTP──▶ VM server ──NFS──▶ NAS
+   │                     ▲
+   └──UDP (chamadas)──▶ Pi (coturn) ──▶ Janus na VM
+```
+
+## Endereços
+
+| Serviço | Endereço | Onde |
+|---|---|---|
+| Nextcloud | `nextcloud.vault76.com.br` | VM |
+| Collabora / Whiteboard / Talk | `collabora.` / `whiteboard.` / `talk.` | VM (usados pelo Nextcloud) |
+| Jellyfin | `jellyfin.vault76.com.br` | VM |
+| Pedidos (Seerr) | `pedidos.vault76.com.br` | VM |
+| Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr | `<nome>.vault76.com.br` | VM |
+| qBittorrent | `qbittorrent.vault76.com.br` | VM |
+| NUT (Tinfoil) | `nut.vault76.com.br` (com usuário e senha) | VM |
+| Grafana | `grafana.vault76.com.br` | VM |
+| Status | `status.vault76.com.br` | Pi |
+| LDAP / DNS | `ldap.` / `dns.vault76.com.br` | Pi |
+| Proxmox / pfSense | `proxmox.` / `pfsense.vault76.com.br` | — |
+
+## 1. Rede (pfSense e roteador)
+
+1. **WAN do pfSense com IP fixo** no roteador da operadora; preencha `pfsenseWan` em `hosts/pi/default.nix`.
+2. **Regra na WAN**: origem `10.42.1.2`, destino *LAN net* e *DEV net*, protocolo *any* (HTTP do proxy e a mídia das chamadas).
+3. **Sem NAT da LAN para o Pi**: em *Firewall → NAT → Outbound*, mude para *Hybrid* e crie uma regra *Do not NAT* com origem *LAN net* e destino `10.42.1.0/24`. Sem ela, o pfSense troca o IP da VM pelo da WAN e o coturn descarta a mídia das chamadas (e o Nextcloud deixa de ver o IP real do Pi).
+4. **Reserva da VM**: *Services → DHCP Server → LAN → Static Mappings*, MAC da VM nova → `10.0.76.8`.
+5. Desligue *Accept Routes* no Tailscale do pfSense (ele aceitaria a `10.42.1.0/24` que o Pi anuncia, que é a rede da própria WAN).
+
+## 2. NAS (OpenMediaVault)
+
+Crie dois compartilhamentos e exporte por NFS para `10.0.76.8` com `rw,subtree_check,root_squash`:
+
+| Compartilhamento | Dono no NAS | Conteúdo |
+|---|---|---|
+| `data` | grupo GID **2000**, `chmod 2775` (setgid) | `torrents/{filmes,series,musica,livros}`, `media/{filmes,series,musica,livros}`, `games/switch` |
+| `nextcloud` | usuário UID **2001**, `chmod 0770` | arquivos do Nextcloud |
+
+Downloads e biblioteca no **mesmo** compartilhamento: os Arr importam por hardlink, sem copiar. Confira o caminho exportado com `showmount -e 10.0.76.6` e, se não for `/data` e `/nextcloud`, ajuste `dionix.nas.shares.<nome>.path`.
+
+## 3. Instalar a VM `server`
+
+1. VM nova no Proxmox (SeaBIOS, disco VirtIO, QEMU Guest Agent, 4+ vCPUs e 8+ GB de RAM: o Collabora e o Jellyfin são os mais pesados). Instale pela ISO mínima.
+2. Gere o `hosts/server/hardware-configuration.nix` dentro da VM e aplique: `sudo nixos-rebuild switch --flake .#server`.
+3. No primeiro boot, os segredos são gerados em `/var/lib/secrets` (nada vai para o repositório):
+
+| Arquivo | Para quê |
+|---|---|
+| `nextcloud-admin-pass` | senha do `admin` do Nextcloud |
+| `grafana-admin-pass` | senha do `admin` do Grafana |
+| `turn-secret` | **copie para o Pi**: `/var/lib/secrets/turn-secret` (root, `chmod 600`), depois `sudo systemctl restart coturn` lá |
+| `talk-*`, `whiteboard.env`, `grafana-secret-key` | usados só pelos serviços |
+
+## 4. Pi: segredos dos serviços novos
+
+```sh
+# TURN (o mesmo arquivo gerado na VM)
+sudo install -Dm600 turn-secret /var/lib/secrets/turn-secret
+
+# Usuário e senha do NUT (o NUT não tem login próprio)
+nix shell nixpkgs#apacheHttpd -c htpasswd -cB /tmp/nut.htpasswd tinfoil
+sudo install -Dm640 -g nginx /tmp/nut.htpasswd /var/lib/secrets/nut.htpasswd
+```
+
+## 5. Ligar os serviços pelos painéis
+
+**Nextcloud**: Collabora, Whiteboard e Talk são configurados sozinhos (`nextcloud-apps-config.service`). Confira em *Administração → Talk* que o servidor de sinalização aparece com ✔. Para o login pelo lldap, ative o app *LDAP user and group backend*:
+
+| Campo | Valor |
+|---|---|
+| Servidor | `ldaps://ldap.vault76.com.br`, porta `6360` |
+| Usuário (bind) | `uid=nextcloud,ou=people,dc=vault76,dc=com,dc=br` (crie no lldap, grupo `lldap_strict_readonly`) |
+| Base | `dc=vault76,dc=com,dc=br` |
+| Filtro de usuários | `(&(objectClass=person)(memberOf=cn=nextcloud,ou=groups,dc=vault76,dc=com,dc=br))` |
+| Atributo de login | `uid` ou `mail` |
+
+**qBittorrent**: a senha temporária do `admin` aparece em `journalctl -u qbittorrent` no primeiro start. Troque-a em *Opções → WebUI*. Crie as categorias `filmes`, `series`, `musica` e `livros`.
+
+**Prowlarr**: adicione os indexadores e, em *Settings → Apps*, o Sonarr, o Radarr, o Lidarr e o Readarr (`http://localhost:<porta>` e a API key de cada um). Para indexadores atrás da Cloudflare, use o FlareSolverr (`http://localhost:8191`).
+
+**Sonarr / Radarr / Lidarr / Readarr**: *Download Client* → qBittorrent em `localhost:8081` com a categoria correspondente; *Root Folder* em `/mnt/nas/data/media/<categoria>`.
+
+**Jellyfin**: bibliotecas em `/mnt/nas/data/media/{filmes,series,musica}`. Login pelo lldap: plugin *LDAP Authentication* (mesmos dados do Nextcloud).
+
+**Seerr**: conecte ao Jellyfin (`http://localhost:8096`), ao Sonarr e ao Radarr.
+
+**Bazarr**: conecte ao Sonarr e ao Radarr (`http://localhost:<porta>`).
+
+**NUT**: copie suas chaves para `/var/lib/nut/app/keys.txt` e reinicie (`systemctl restart nut`). No Tinfoil, *File Browser → nova fonte*: protocolo `https`, host `nut.vault76.com.br`, porta `443`, usuário e senha do htpasswd.
+
+**Grafana**: o Prometheus já é a fonte de dados. Painel dos hosts: *Dashboards → New → Import → 1860*. No Proxmox e no NAS, `apt install prometheus-node-exporter` para eles aparecerem.
+
+## Observações
+
+- **Readarr**: o projeto foi descontinuado pelos autores em 2025. O pacote continua no nixpkgs, mas sem atualizações; se ele parar de funcionar, remova-o de `media.nix`.
+- **Chamadas do Talk** só funcionam em casa e pela tailnet (sem portas abertas na internet). Para liberar de fora, o coturn precisaria de IP público e portas abertas no roteador e no pfSense.
+- **Transcodificação por hardware no Jellyfin**: passe a GPU (ou iGPU) para a VM no Proxmox e ative `services.jellyfin.hardwareAcceleration` em `media.nix`.
+- **Torrents**: para receber conexões de entrada, encaminhe a porta `51413` (TCP/UDP) no roteador da operadora → WAN do pfSense → `10.0.76.8`.
+- **Backup**: a VM faz backup diário da configuração dos serviços e do dump do Postgres (`gdrive:homelab/server`). Os arquivos do NAS entram no backup do próprio NAS ([`scripts/backup`](../scripts/backup/README.md)).

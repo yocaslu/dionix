@@ -1,12 +1,18 @@
 # Raspberry Pi 4 do homelab (10.42.1.2): roteador do Tailscale, DNS
-# (Technitium), proxy reverso (Nginx), login central (lldap) e backup no
-# Google Drive. Substitui o core-compose (Traefik, Technitium e Portainer em
-# Docker). Não tem hardware-configuration.nix: a imagem SD já define os
-# sistemas de arquivos (modules/nixos/raspberry-pi.nix).
-{ lib, pkgs, ... }:
+# (Technitium), proxy reverso (Nginx), login central (lldap), TURN das chamadas
+# do Talk, página de status e backup no Google Drive. Substitui o core-compose
+# (Traefik, Technitium e Portainer em Docker). Não tem hardware-configuration.nix:
+# a imagem SD já define os sistemas de arquivos (modules/nixos/raspberry-pi.nix).
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  # VM production (Ubuntu, services-compose), na LAN do pfSense
-  vm = "10.0.76.8";
+  # VM `server` (NixOS), na LAN do pfSense
+  vm = config.dionix.homelab.server;
+  em = port: "http://${vm}:${toString port}";
 
   # IP da WAN do pfSense na rede de casa: as redes atrás dele são roteadas por
   # aqui (sem NAT). Reserve esse IP no roteador da operadora e preencha.
@@ -24,6 +30,9 @@ in
     ../../modules/nixos/dns-server.nix
     ../../modules/nixos/reverse-proxy.nix
     ../../modules/nixos/ldap.nix
+    ../../modules/nixos/talk-turn.nix
+    ../../modules/nixos/status.nix
+    ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
 
@@ -36,32 +45,44 @@ in
   # <serviço>.vault76.com.br. Dentro de casa (e pela tailnet) o Technitium
   # responde *.vault76.com.br com o IP do Pi; de fora vale o DNS da Cloudflare.
   dionix.proxy = {
-    domain = "vault76.com.br";
+    inherit (config.dionix.homelab) domain;
     acme.enable = true; # token em /var/lib/secrets/acme.env (CF_DNS_API_TOKEN=...)
 
+    # ldap.<domínio> vem do ldap.nix e status.<domínio> do status.nix
     hosts = {
       dns = "http://127.0.0.1:5380"; # painel do Technitium
-      # ldap.vault76.com.br vem do ldap.nix
       proxmox = "https://10.42.1.20:8006";
       pfsense = "https://10.0.76.1";
 
-      # VM production
-      portainer = "https://${vm}:9443";
-      pgadmin = "http://${vm}:8090";
+      # VM server: Nextcloud e companhia (nextcloud.nix)
       nextcloud = {
-        upstream = "http://${vm}:8080";
+        upstream = em 80;
         largeUploads = true;
         hsts = true;
-        locations = {
-          # Collabora (edição de documentos) servido pelo mesmo endereço
-          "^~ /browser" = "http://${vm}:9980";
-          "^~ /hosting/discovery" = "http://${vm}:9980";
-          "^~ /hosting/capabilities" = "http://${vm}:9980";
-          "^~ /cool/" = "http://${vm}:9980";
-          "/whiteboard/" = "http://${vm}:3002/";
-        };
       };
-      collabora = "http://${vm}:9980";
+      collabora = em 9980;
+      whiteboard = em 3002;
+      talk = em 8095;
+
+      # VM server: mídia (media.nix)
+      jellyfin = em 8096;
+      pedidos = em 5055; # Seerr
+      sonarr = em 8989;
+      radarr = em 7878;
+      lidarr = em 8686;
+      readarr = em 8787;
+      prowlarr = em 9696;
+      bazarr = em 6767;
+      qbittorrent = em 8081;
+
+      # VM server: jogos do Switch (switch-nut.nix), sem login próprio
+      nut = {
+        upstream = em 9000;
+        basicAuthFile = "/var/lib/secrets/nut.htpasswd";
+      };
+
+      # VM server: monitoramento (monitoring.nix)
+      grafana = em 3000;
     };
   };
 
