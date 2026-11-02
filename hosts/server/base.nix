@@ -17,8 +17,8 @@
     efi.canTouchEfiVariables = true;
   };
 
-  # Rede: qualquer porta Ethernet (o adaptador USB muda de nome conforme a porta),
-  # por DHCP. Reserve 10.42.1.20 para o MAC do adaptador no roteador da operadora.
+  # Rede: qualquer porta Ethernet, por DHCP. Reserve 10.42.1.22 para o MAC da
+  # placa Realtek (enp2s0) no roteador da operadora.
   networking.useNetworkd = true;
   systemd.network.networks."10-ethernet" = {
     matchConfig.Type = "ether";

@@ -15,7 +15,7 @@
     };
     server = lib.mkOption {
       type = lib.types.str;
-      default = "10.42.1.20";
+      default = "10.42.1.22";
       description = "Host `server` (NixOS direto no hardware), na rede de casa.";
     };
   };

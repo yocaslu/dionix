@@ -1,6 +1,6 @@
 # Proxy reverso com Nginx: cada entrada de `dionix.proxy.hosts` vira
 # <nome>.<domínio> apontando para um serviço do homelab. A entrada pode ser só
-# o endereço ("http://10.42.1.20:8080") ou um attrset com rotas extras.
+# o endereço ("http://10.42.1.22:8080") ou um attrset com rotas extras.
 #
 # Para os nomes resolverem dentro de casa, crie no Technitium a zona do domínio
 # com um registro curinga `*` (A) apontando para o IP do Pi (DNS split-horizon:

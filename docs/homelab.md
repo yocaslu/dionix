@@ -5,7 +5,7 @@ Dois hosts NixOS, na mesma rede de casa (`10.42.1.0/24`), sem hypervisor e sem c
 | Host | Máquina | O que roda |
 |---|---|---|
 | `pi` | Raspberry Pi 4, `10.42.1.2` | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), página de status (Gatus), roteador Tailscale da rede de casa e exit node |
-| `server` | i7-4790, 32 GB, RX 580, `10.42.1.20` | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, FTP dos jogos do Switch, Prometheus + Grafana |
+| `server` | i7-4790, 32 GB, iGPU HD 4600, `10.42.1.22` | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, FTP dos jogos do Switch, Prometheus + Grafana |
 
 O `server` guarda tudo num espelho ZFS de dois HDs de 1 TB (1 TB úteis, aguenta perder um disco); o sistema fica num HD de 500 GB.
 
@@ -28,7 +28,7 @@ tailnet ──▶ Pi (rota da 10.42.1.0/24) ──▶ server
 | Grafana | `grafana.vault76.com.br` |
 | Status | `status.vault76.com.br` (Pi) |
 | LDAP / DNS | `ldap.` / `dns.vault76.com.br` (Pi) |
-| Jogos do Switch (FTP) | `ftp://10.42.1.20`, usuário `switch`, só leitura e só na rede de casa |
+| Jogos do Switch (FTP) | `ftp://10.42.1.22`, usuário `switch`, só leitura e só na rede de casa |
 
 ## Tailscale
 
@@ -41,7 +41,7 @@ No roteador da operadora, reserve por DHCP:
 | IP | Para |
 |---|---|
 | `10.42.1.2` | Pi |
-| `10.42.1.20` | server: o **MAC do adaptador USB Gigabit** (o server pega IP por DHCP em qualquer porta Ethernet) |
+| `10.42.1.22` | server: o **MAC da placa Realtek PCIe** (`enp2s0`; o server pega IP por DHCP em qualquer porta Ethernet) |
 
 ## 2. Instalar o server (HD gravado no desktop)
 
@@ -71,7 +71,7 @@ O server não instala a si mesmo: o HD de 500 GB é gravado no desktop, ligado p
 3. **Primeiro acesso e senha.** Se a máquina não aparecer na rede, ligue monitor e teclado: o login local pede senha, que ainda não existe, então regrave o HD ou use um pendrive do NixOS para investigar.
 
    ```sh
-   ssh -t dio@10.42.1.20 sudo passwd dio
+   ssh -t dio@10.42.1.22 sudo passwd dio
    ```
 
    Faça isso antes do passo 5: o `.#server` volta a pedir a senha no sudo.
@@ -79,32 +79,32 @@ O server não instala a si mesmo: o HD de 500 GB é gravado no desktop, ligado p
 4. **Crie o pool.** Veja os IDs e os coloque em `hosts/server/tank.nix`. Confira os tamanhos: os de 1 TB, nunca o de 500 GB.
 
    ```sh
-   ssh dio@10.42.1.20 'lsblk -o NAME,SIZE,MODEL,SERIAL; ls -l /dev/disk/by-id/ | grep -v part'
+   ssh dio@10.42.1.22 'lsblk -o NAME,SIZE,MODEL,SERIAL; ls -l /dev/disk/by-id/ | grep -v part'
    ```
 
    Depois, da máquina de administração (o disko mostra os discos e pede confirmação; o `--override-input` usa o ZFS do próprio sistema):
 
    ```sh
-   scp hosts/server/tank.nix dio@10.42.1.20:
-   ssh -t dio@10.42.1.20 'sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko/latest --override-input nixpkgs nixpkgs -- --mode destroy,format,mount tank.nix && sudo zpool export tank'
+   scp hosts/server/tank.nix dio@10.42.1.22:
+   ssh -t dio@10.42.1.22 'sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko/latest --override-input nixpkgs nixpkgs -- --mode destroy,format,mount tank.nix && sudo zpool export tank'
    ```
 
-5. **Ajustes da máquina.** Compare a detecção real com `hosts/server/hardware-configuration.nix` e traga o que faltar (sem `fileSystems`/`swapDevices`). Com a RX 580 instalada, confira o endereço dela (`lspci | grep VGA`, costuma ser `01:00.0`) e, se for outro, ajuste o `device` do Jellyfin em `modules/nixos/media.nix`.
+5. **Ajustes da máquina.** Compare a detecção real com `hosts/server/hardware-configuration.nix` e traga o que faltar (sem `fileSystems`/`swapDevices`). Confira o endereço da GPU (`lspci | grep VGA`; a iGPU é `00:02.0`) e, se for outro, ajuste o `device` do Jellyfin em `modules/nixos/media.nix`.
 
    ```sh
-   ssh dio@10.42.1.20 'nixos-generate-config --show-hardware-config; lspci | grep VGA'
+   ssh dio@10.42.1.22 'nixos-generate-config --show-hardware-config; lspci | grep VGA'
    ```
 
 6. **Aplique a configuração completa**, da máquina de administração, e faça commit dos IDs e dos ajustes:
 
    ```sh
-   nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo --ask-sudo-password
+   nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo --ask-sudo-password
    ```
 
 Atualizações depois, de qualquer máquina com a chave SSH:
 
 ```sh
-nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo --ask-sudo-password
+nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo --ask-sudo-password
 ```
 
 ## 3. Primeiro boot
@@ -130,7 +130,7 @@ Confira:
 
 ```sh
 zpool status tank          # espelho ONLINE nos dois discos
-vainfo --display drm --device /dev/dri/by-path/pci-0000:01:00.0-render   # VA-API da RX 580
+vainfo --display drm --device /dev/dri/by-path/pci-0000:00:02.0-render   # VA-API da iGPU
 ```
 
 ## 4. Ligar os serviços pelos painéis
@@ -151,11 +151,11 @@ vainfo --display drm --device /dev/dri/by-path/pci-0000:01:00.0-render   # VA-AP
 
 **Sonarr / Radarr / Lidarr / Readarr**: *Download Client* → qBittorrent em `localhost:8081` com a categoria correspondente; *Root Folder* em `/srv/data/media/<categoria>`.
 
-**Jellyfin**: bibliotecas em `/srv/data/media/{filmes,series,musica}`. A transcodificação na RX 580 já vem configurada. Login pelo lldap: plugin *LDAP Authentication* (mesmos dados do Nextcloud).
+**Jellyfin**: bibliotecas em `/srv/data/media/{filmes,series,musica}`. A transcodificação na iGPU já vem configurada. Login pelo lldap: plugin *LDAP Authentication* (mesmos dados do Nextcloud).
 
 **Seerr**: conecte ao Jellyfin (`http://localhost:8096`), ao Sonarr e ao Radarr. **Bazarr**: ao Sonarr e ao Radarr.
 
-**Jogos do Switch**: torrents na categoria `switch` caem em `/srv/data/games/switch`, que aparece no Nextcloud (*Jogos do Switch*, grupo `admin`) e no FTP. No Switch, no gerenciador que você usar (DBI, Tinfoil, Goldleaf…), adicione uma fonte FTP: host `10.42.1.20`, porta `21`, usuário `switch`, modo passivo.
+**Jogos do Switch**: torrents na categoria `switch` caem em `/srv/data/games/switch`, que aparece no Nextcloud (*Jogos do Switch*, grupo `admin`) e no FTP. No Switch, no gerenciador que você usar (DBI, Tinfoil, Goldleaf…), adicione uma fonte FTP: host `10.42.1.22`, porta `21`, usuário `switch`, modo passivo.
 
 **Grafana**: o Prometheus já é a fonte de dados. Painéis prontos: *Dashboards → New → Import* → `1860` (Node Exporter Full) e um de ZFS (procure "ZFS" em grafana.com/dashboards).
 
@@ -164,7 +164,7 @@ vainfo --display drm --device /dev/dri/by-path/pci-0000:01:00.0-render   # VA-AP
 - **Snapshots do ZFS**: a cada hora (24), dia (14) e mês (3), em `tank/data` e `tank/nextcloud`. Arquivo apagado: copie de `/srv/data/.zfs/snapshot/<snapshot>/…`.
 - **Disco com defeito**: o pool continua funcionando com um disco. `zpool status` mostra qual falhou; troque e rode `zpool replace tank <antigo> /dev/disk/by-id/<novo>`.
 - **Readarr**: descontinuado pelos autores em 2025. O pacote continua no nixpkgs, mas sem atualizações; se parar de funcionar, remova-o de `media.nix`.
-- **RX 580**: decodifica H.264 e HEVC (8 e 10 bits) e codifica H.264 e HEVC de 8 bits. VP9 e AV1 ficam com a CPU.
+- **iGPU HD 4600**: decodifica H.264, MPEG-2 e VC-1 e codifica H.264. HEVC, VP9 e AV1 ficam com a CPU.
 - **Chamadas do Talk** funcionam em casa e pela tailnet. Para liberar pela internet, seria preciso um TURN com IP público e portas abertas no roteador.
-- **Torrents**: para receber conexões de entrada, encaminhe a porta `51413` (TCP/UDP) no roteador para `10.42.1.20`.
+- **Torrents**: para receber conexões de entrada, encaminhe a porta `51413` (TCP/UDP) no roteador para `10.42.1.22`.
 - **NUT (servidor para o Tinfoil)**: pausado. O pacote (`pkgs/nut`) e o módulo (`modules/nixos/switch-nut.nix`) ficam no repositório; para voltar, importe o módulo no `server` e adicione `nut` ao proxy do Pi (com `basicAuthFile`, porque o NUT não tem login próprio).

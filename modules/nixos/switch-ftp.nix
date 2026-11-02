@@ -3,7 +3,7 @@
 #
 #   Pasta:   /srv/data/games/switch (o qBittorrent baixa nela; o Nextcloud mostra
 #            a mesma pasta como "Jogos do Switch")
-#   Acesso:  ftp://10.42.1.20, porta 21, usuário "switch" (passivo nas 50000-50019)
+#   Acesso:  ftp://10.42.1.22, porta 21, usuário "switch" (passivo nas 50000-50019)
 #            liberado só para a rede de casa
 #
 # A senha do usuário fica fora do repositório (hash SHA-512):

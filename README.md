@@ -6,7 +6,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
 | `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
-| `server` | Servidor do homelab, direto no hardware (i7-4790, RX 580, 10.42.1.20) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
+| `server` | Servidor do homelab, direto no hardware (i7-4790, iGPU HD 4600, 10.42.1.22) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
 | `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + status (Gatus) + backup |
 
 A base é o **NixOS 26.05** (estável). Pacotes pontuais podem vir do `nixos-unstable` com `pkgs.unstable.<pacote>`.
@@ -99,7 +99,7 @@ Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos
 Atualizações a partir do desktop:
 
 ```sh
-nixos-rebuild switch --flake .#server --target-host dio@10.42.1.20 --sudo
+nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo
 ```
 
 ### Raspberry Pi (roteador, DNS e proxy)
