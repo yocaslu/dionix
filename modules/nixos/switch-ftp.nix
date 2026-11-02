@@ -53,6 +53,8 @@ in
       pasv_max_port=${toString pasv.to}
       # O usuário não tem shell de login
       check_shell=NO
+      # A pasta é gravável pelo grupo media (o qBittorrent baixa nela); o FTP é só leitura
+      allow_writeable_chroot=YES
       # Listagens com nomes longos e acentos, comuns nos arquivos de jogos
       utf8_filesystem=YES
     '';

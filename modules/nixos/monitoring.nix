@@ -107,7 +107,7 @@ in
       UMask = "0077";
     };
     script = ''
-      mkdir -p ${secrets}
+      install -d -m 0711 ${secrets}
       for f in grafana-admin-pass grafana-secret-key; do
         [ -s ${secrets}/$f ] || openssl rand -hex 16 > ${secrets}/$f
       done

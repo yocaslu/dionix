@@ -240,7 +240,8 @@ in
       UMask = "0077";
     };
     script = ''
-      mkdir -p ${secrets}
+      # Só atravessável: cada serviço lê apenas os próprios arquivos
+      install -d -m 0711 ${secrets}
       gen() { [ -s "${secrets}/$1" ] || printf '%s%s' "$3" "$(openssl rand -hex "$2")" > "${secrets}/$1"; }
       gen nextcloud-admin-pass 16
       gen talk-backend-secret 32
@@ -249,6 +250,8 @@ in
       gen talk-blockkey 16          # 32 caracteres: chave AES-256
       gen whiteboard.env 32 JWT_SECRET_KEY=
       chown nextcloud:nextcloud ${secrets}/nextcloud-admin-pass
+      # A sinalização do Talk lê os segredos com o próprio usuário
+      chown ${config.services.nextcloud-spreed-signaling.user} ${secrets}/talk-{backend-secret,internal-secret,hashkey,blockkey}
     '';
   };
 
