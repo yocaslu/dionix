@@ -18,6 +18,20 @@ let
     ];
     text = builtins.readFile ./files/ssh-key-restore/ssh-key-restore.sh;
   };
+
+  # O rpi-imager 2.x só grava cartões como root. Pelo sudo, o DISPLAY do Xwayland
+  # passa e o WAYLAND_DISPLAY não, e o Qt cai no X11, que recusa o root. Aqui o
+  # pkexec (senha pelo agente do polkit) recebe o socket do Wayland pelo caminho
+  # completo; o próprio programa aponta HOME e XDG_* de volta para o usuário.
+  rpiImagerRoot = pkgs.writeShellApplication {
+    name = "rpi-imager-root";
+    text = ''
+      exec /run/wrappers/bin/pkexec ${lib.getExe' pkgs.coreutils "env"} \
+        WAYLAND_DISPLAY="$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" \
+        QT_QPA_PLATFORM=wayland \
+        ${lib.getExe pkgs.rpi-imager} "$@"
+    '';
+  };
 in
 {
   programs.firefox.enable = true;
@@ -64,7 +78,24 @@ in
     rbw
     pinentry-curses
     sshKeyRestore
+    # Grava imagens em cartões SD (Raspberry Pi OS, ou a imagem do pi deste flake)
+    rpi-imager
+    rpiImagerRoot
   ];
+
+  # O atalho do menu abre já com permissão de gravar (mesmo nome do .desktop do
+  # pacote, que fica escondido por este)
+  xdg.desktopEntries."com.raspberrypi.rpi-imager" = {
+    name = "Raspberry Pi Imager";
+    genericName = "Gravador de cartões SD";
+    exec = "rpi-imager-root %u";
+    icon = "rpi-imager";
+    categories = [ "Utility" ];
+    mimeType = [
+      "x-scheme-handler/rpi-imager"
+      "application/vnd.raspberrypi.imager-manifest+json"
+    ];
+  };
 
   xdg.userDirs = {
     enable = true;
