@@ -1,11 +1,11 @@
-# Servidor do homelab, direto no hardware (sem Proxmox): i7-4790, 32 GB, RX 580,
+# Servidor do homelab, direto no hardware (sem Proxmox): i7-4790, 32 GB, iGPU HD 4600,
 # sistema num HD de 500 GB e espelho ZFS nos dois HDs de 1 TB (tank.nix).
-# Fica na rede de casa, em 10.42.1.20; o Pi publica cada serviço com HTTPS em
+# Fica na rede de casa, em 10.42.1.22; o Pi publica cada serviço com HTTPS em
 # <serviço>.vault76.com.br.
 #
 #   storage.nix       pool ZFS: snapshots, scrub, SMART
 #   nextcloud.nix     Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus)
-#   media.nix         Jellyfin (VA-API na RX 580), Seerr, suite Arr, qBittorrent
+#   media.nix         Jellyfin (VA-API na iGPU), Seerr, suite Arr, qBittorrent
 #   switch-ftp.nix    FTP só leitura dos jogos do Switch para a rede de casa
 #   monitoring.nix    Prometheus + Grafana
 #
@@ -35,8 +35,12 @@
     dns = [ config.dionix.homelab.pi ];
   };
 
-  # RX 580: decodificação e codificação de vídeo (VA-API, Mesa)
-  hardware.graphics.enable = true;
+  # iGPU HD 4600 (Haswell): decodificação e codificação de vídeo (VA-API). O Mesa
+  # não tem VA-API para Intel e o iHD não suporta Haswell, então o driver é o i965.
+  hardware.graphics = {
+    enable = true;
+    extraPackages = [ pkgs.intel-vaapi-driver ];
+  };
   environment.systemPackages = [ pkgs.libva-utils ]; # `vainfo` confere a aceleração
 
   # Backup diário no Google Drive (gdrive:homelab/server): configuração dos

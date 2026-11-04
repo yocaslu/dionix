@@ -3,13 +3,12 @@
 #   tank/nextcloud  /var/lib/nextcloud/data    arquivos do Nextcloud
 #
 # Criado no próprio server, com o `server-bootstrap` no ar, nunca em outra máquina
-# (docs/homelab.md). O disko apaga os dois discos. Troque os caminhos abaixo pelos
-# IDs reais (`ls -l /dev/disk/by-id/`); enquanto não existirem, ele não formata nada.
-# Depois disso o NixOS monta pelo nome do pool e os caminhos não são mais usados.
+# (docs/homelab.md). O disko apaga os dois discos. Depois de criado, o NixOS monta
+# pelo nome do pool e os caminhos abaixo não são mais usados.
 let
   espelho = [
-    "/dev/disk/by-id/TROCAR-PELO-ID-DO-HD-1TB-A"
-    "/dev/disk/by-id/TROCAR-PELO-ID-DO-HD-1TB-B"
+    "/dev/disk/by-id/ata-ST1000LM035-1RK172_ZDEKJ3GX" # Seagate 2,5" (SMR)
+    "/dev/disk/by-id/ata-ST1000NM0008-2F2100_ZDR00M62" # Seagate Exos 3,5"
   ];
 
   discoZfs = device: {

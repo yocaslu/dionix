@@ -51,25 +51,22 @@ in
       enable = true;
       group = "media";
       openFirewall = true;
-      # Transcodificação na RX 580 (VA-API). Endereço PCI em vez de renderD128 porque a
-      # numeração muda se a iGPU também estiver ativa; confira com `ls /dev/dri/by-path`.
+      # Transcodificação na iGPU (VA-API, driver i965). Endereço PCI em vez de renderD128
+      # porque a numeração muda se entrar uma placa de vídeo; confira com `ls /dev/dri/by-path`.
       hardwareAcceleration = {
         enable = true;
         type = "vaapi";
-        device = "/dev/dri/by-path/pci-0000:01:00.0-render";
+        device = "/dev/dri/by-path/pci-0000:00:02.0-render";
       };
-      # O que a RX 580 (Polaris) faz por hardware: decodifica H.264 e HEVC de 8 e 10 bits,
-      # codifica H.264 e HEVC de 8 bits. VP9 e AV1 ficam com a CPU.
+      # O que a HD 4600 (Haswell) faz por hardware: decodifica H.264, MPEG-2 e VC-1 e
+      # codifica H.264. HEVC, VP9 e AV1 ficam com a CPU.
       transcoding = {
         enableHardwareEncoding = true;
         hardwareDecodingCodecs = {
           h264 = true;
-          hevc = true;
-          hevc10bit = true;
           mpeg2 = true;
           vc1 = true;
         };
-        hardwareEncodingCodecs.hevc = true;
       };
       # Grava a configuração de transcodificação mesmo se já existir uma do painel
       forceEncodingConfig = true;
