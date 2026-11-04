@@ -205,6 +205,12 @@ Instala em `~/.ssh` a chave SSH desta máquina, guardada no cofre do Bitwarden (
 Uso: rode `rbw unlock` e depois `ssh-key-restore` (usa a entrada com o nome da máquina)
 ou `ssh-key-restore notebook`. Nunca sobrescreve uma chave existente.
 
+## rpi-imager-root
+Abre o Raspberry Pi Imager com permissão para gravar cartões SD (só em notebook e desktop).
+
+Uso: `rpi-imager-root`; a senha é pedida numa janela do polkit. O atalho do menu
+já usa este comando. Não use `sudo rpi-imager`: o Qt cai no X11 e não abre.
+
 ## wall
 Troca o papel de parede (awww) com transição.
 
