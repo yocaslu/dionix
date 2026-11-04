@@ -104,7 +104,7 @@ nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo
 
 ### Raspberry Pi (roteador, DNS e proxy)
 
-O `pi` não tem instalador: o flake gera a imagem do cartão SD já configurada. O `desktop` emula ARM (`boot.binfmt.emulatedSystems`), então a imagem compila nele depois de um `rebuild`:
+O `pi` não tem instalador: o flake gera a imagem do cartão SD já configurada. O `notebook` e o `desktop` emulam ARM (`boot.binfmt.emulatedSystems`, no `workstation.nix`), então a imagem compila em qualquer um deles depois de um `rebuild`:
 
 ```sh
 nix build .#packages.aarch64-linux.pi-image
