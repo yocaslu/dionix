@@ -15,11 +15,28 @@
   # Firmware do Wi-Fi/Bluetooth e blobs do Pi
   hardware.enableRedistributableFirmware = true;
 
+  # O glances (common.nix) não tem cache para aarch64, e os testes dele levam
+  # dezenas de minutos na emulação ARM do notebook/desktop
+  nixpkgs.overlays = [
+    (final: prev: {
+      glances = prev.glances.overridePythonAttrs { doCheck = false; };
+    })
+  ];
+
   # O perfil base da imagem habilita ZFS, que não é usado aqui e só atrasa o build
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
   # A imagem expande a partição raiz para o cartão inteiro no primeiro boot
   sdImage.expandOnBoot = true;
+
+  # CPU fixa na frequência mínima (600 MHz) para o chip esquentar menos. Os
+  # serviços do Pi sobram nela; backups e compilar a config no próprio Pi ficam
+  # mais lentos. Para um build pesado: `sudo cpupower frequency-set -g schedutil`
+  # (volta ao powersave no próximo boot). Temperatura: node_thermal_zone_temp.
+  powerManagement.cpuFreqGovernor = "powersave";
+  # O driver vem pelo udev, que pode chegar depois do cpufreq.service: carregado
+  # junto com os módulos do boot, o governor já encontra o driver
+  boot.kernelModules = [ "raspberrypi_cpufreq" ];
 
   # Sem senha no usuário (só chave SSH), então o sudo não pede senha.
   # Se preferir, defina uma com `passwd` e remova esta linha.
