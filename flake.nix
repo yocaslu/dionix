@@ -79,7 +79,7 @@
     {
       nixosConfigurations = nixpkgs.lib.mapAttrs mkHost hosts;
 
-      # Imagem do cartão SD do Raspberry Pi (compila no desktop via emulação ARM)
+      # Imagem do cartão SD do Raspberry Pi (compila no notebook ou no desktop via emulação ARM)
       packages.aarch64-linux.pi-image = self.nixosConfigurations.pi.config.system.build.sdImage;
 
       # `nix fmt` formata todos os arquivos .nix

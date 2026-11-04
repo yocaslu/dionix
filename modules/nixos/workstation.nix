@@ -130,4 +130,7 @@
   ];
 
   home-manager.users.${username}.imports = [ ../../home/desktop ];
+
+  # Emula ARM (QEMU) para compilar a imagem e as atualizações do Raspberry Pi
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 }

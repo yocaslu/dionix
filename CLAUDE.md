@@ -32,7 +32,7 @@ nix flake check                                                        # avalia 
 nix build .#nixosConfigurations.notebook.config.home-manager.users.dio.home-files   # valida a config do Sway e roda o shellcheck nos scripts
 nix build .#nixosConfigurations.<host>.config.system.build.toplevel    # build completo
 nix build .#checks.x86_64-linux.theme-script                           # testes do comando theme
-nix build .#packages.aarch64-linux.pi-image                            # imagem SD do Pi (precisa da emulação ARM do desktop)
+nix build .#packages.aarch64-linux.pi-image                            # imagem SD do Pi (precisa da emulação ARM do notebook ou do desktop)
 ```
 
 ## Cuidados
