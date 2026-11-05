@@ -2,9 +2,9 @@
 # desgastaria o cartão SD do Pi); a página de status (Gatus) fica no Pi.
 #
 #   grafana.<domínio>  :3000   painéis; o Prometheus já vem como fonte de dados
-#   Prometheus         :9090   só local (consultado pelo Grafana)
+#   Prometheus         :9090   aberto na rede de casa (Grafana e a página inicial do Pi)
 #
-# Painel pronto para os hosts: Dashboards → New → Import → ID 1860 (Node Exporter Full).
+# O painel Node Exporter Full (grafana.com, ID 1860) já vem provisionado.
 {
   config,
   lib,
@@ -15,6 +15,19 @@ let
   inherit (config.dionix.homelab) domain pi;
   secrets = "/var/lib/secrets";
   node = host: "${host}:9100";
+
+  # Node Exporter Full (https://grafana.com/grafana/dashboards/1860)
+  nodeExporterFull = pkgs.fetchurl {
+    name = "node-exporter-full.json";
+    url = "https://grafana.com/api/dashboards/1860/revisions/46/download";
+    sha256 = "18yfc6cji2yfbcc8xsbqdxxsxmg3qf5n9aadz40wkm1mqmfxr3g5";
+  };
+  paineis = pkgs.linkFarm "grafana-paineis" [
+    {
+      name = "node-exporter-full.json";
+      path = nodeExporterFull;
+    }
+  ];
 in
 {
   imports = [
@@ -24,7 +37,8 @@ in
 
   services.prometheus = {
     enable = true;
-    listenAddress = "127.0.0.1";
+    # Sem login: só leitura de métricas, aberto como o Grafana (firewall abaixo)
+    listenAddress = "0.0.0.0";
     retentionTime = "90d";
     globalConfig.scrape_interval = "30s";
     scrapeConfigs = [
@@ -91,6 +105,12 @@ in
           isDefault = true;
         }
       ];
+      dashboards.settings.providers = [
+        {
+          name = "dionix";
+          options.path = paineis;
+        }
+      ];
     };
   };
 
@@ -115,5 +135,8 @@ in
     '';
   };
 
-  networking.firewall.allowedTCPPorts = [ 3000 ];
+  networking.firewall.allowedTCPPorts = [
+    3000
+    config.services.prometheus.port
+  ];
 }
