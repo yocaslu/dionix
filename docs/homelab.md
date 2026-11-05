@@ -137,13 +137,11 @@ read -rs p && sudo install -Dm600 /dev/stdin /var/lib/secrets/lldap-admin-pass <
 read -rs t && sudo install -Dm600 /dev/stdin /var/lib/secrets/acme.env <<< "CF_DNS_API_TOKEN=$t"
 ```
 
-**DNS.** O `technitium-zona.service` cria no Technitium a zona `vault76.com.br` com o curinga `*` → `10.42.1.2` (e `server`, `pi`), a partir de `dionix.dns` em `hosts/pi/default.nix`. Ele precisa de um token da API. Troque a senha padrão do painel (`admin`/`admin`) e gere o token no Pi:
+**DNS.** O `technitium-zona.service` cria no Technitium a zona `vault76.com.br` com o curinga `*` → `10.42.1.2` (e `@`, `server`, `pi`), a partir de `dionix.dns` em `hosts/pi/default.nix`. Ele precisa de um token da API. Troque a senha padrão do painel (`admin`/`admin`), gere o token em *Administration → Sessions → Create Token* e grave-o no Pi:
 
 ```sh
-read -rs p && curl -s --get http://127.0.0.1:5380/api/user/createToken \
-  --data-urlencode user=admin --data-urlencode "pass=$p" --data-urlencode tokenName=nixos |
-  jq -r .token | sudo install -Dm600 /dev/stdin /var/lib/secrets/technitium-token
-sudo systemctl restart technitium-zona
+read -rs t && sudo install -Dm600 /dev/stdin /var/lib/secrets/technitium-token <<< "$t"
+sudo systemctl restart technitium-zona && journalctl -u technitium-zona -n 3
 ```
 
 Na Cloudflare, crie o mesmo curinga, para quem não usa o Pi como DNS (o próprio server, o roteador, celulares fora da tailnet): *DNS → Records → Add*, tipo `A`, nome `*`, IP `10.42.1.2`, **DNS only** (nuvem cinza). Ele só funciona dentro de casa ou pela tailnet, porque o IP é da rede local.

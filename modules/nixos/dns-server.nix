@@ -88,7 +88,11 @@ in
           printf '%s' "$resposta"
         }
 
-        if ! chamar zones/list | jq -e '.response.zones[] | select(.name == "${cfg.zone}")' >/dev/null; then
+        zonas=$(chamar zones/list) || {
+          echo "o Technitium recusou ${token}: gere outro token (docs/homelab.md)" >&2
+          exit 1
+        }
+        if ! jq -e '.response.zones[] | select(.name == "${cfg.zone}")' <<< "$zonas" >/dev/null; then
           chamar zones/create --data-urlencode "zone=${cfg.zone}" --data-urlencode "type=Primary" >/dev/null
           echo "zona ${cfg.zone} criada"
         fi
