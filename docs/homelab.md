@@ -4,7 +4,7 @@ Dois hosts NixOS, na mesma rede de casa (`10.42.1.0/24`), sem hypervisor e sem c
 
 | Host | Máquina | O que roda |
 |---|---|---|
-| `pi` | Raspberry Pi 4, `10.42.1.2` | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), página de status (Gatus), roteador Tailscale da rede de casa e exit node |
+| `pi` | Raspberry Pi 4, `10.42.1.2` | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), página de status (Gatus), página inicial (Homepage), roteador Tailscale da rede de casa e exit node |
 | `server` | i7-4790, 32 GB, iGPU HD 4600, `10.42.1.22` | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, FTP dos jogos do Switch, Prometheus + Grafana |
 
 O `server` guarda tudo num espelho ZFS de dois HDs de 1 TB (1 TB úteis, aguenta perder um disco); o sistema fica num HD de 500 GB.
@@ -19,13 +19,14 @@ tailnet ──▶ Pi (rota da 10.42.1.0/24) ──▶ server
 
 | Serviço | Endereço |
 |---|---|
+| Página inicial (links, status e uso do server e do Pi) | `home.vault76.com.br` (Pi) |
 | Nextcloud | `nextcloud.vault76.com.br` |
 | Collabora / Whiteboard / Talk | `collabora.` / `whiteboard.` / `talk.` (usados pelo Nextcloud) |
 | Jellyfin | `jellyfin.vault76.com.br` |
 | Pedidos (Seerr) | `pedidos.vault76.com.br` |
 | Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr | `<nome>.vault76.com.br` |
 | qBittorrent | `qbittorrent.vault76.com.br` |
-| Grafana | `grafana.vault76.com.br` |
+| Grafana | `grafana.vault76.com.br` (painel *Node Exporter Full* já provisionado) |
 | Status | `status.vault76.com.br` (Pi) |
 | LDAP / DNS | `ldap.` / `dns.vault76.com.br` (Pi) |
 | Jogos do Switch (FTP) | `ftp://10.42.1.22`, usuário `switch`, só leitura e só na rede de casa |
@@ -125,6 +126,29 @@ nix shell nixpkgs#mkpasswd -c mkpasswd -m sha-512 | sudo install -Dm600 /dev/std
 ```
 
 E os do backup ([`docs/backup.md`](backup.md)).
+
+No Pi, crie à mão (com `read -rs`, a senha não fica no histórico do shell):
+
+```sh
+sudo install -d -m700 /var/lib/secrets
+# Senha do admin do lldap
+read -rs p && sudo install -Dm600 /dev/stdin /var/lib/secrets/lldap-admin-pass <<< "$p"
+# Token da Cloudflare para o certificado (Zone → DNS → Edit em vault76.com.br)
+read -rs t && sudo install -Dm600 /dev/stdin /var/lib/secrets/acme.env <<< "CF_DNS_API_TOKEN=$t"
+```
+
+**DNS.** O `technitium-zona.service` cria no Technitium a zona `vault76.com.br` com o curinga `*` → `10.42.1.2` (e `server`, `pi`), a partir de `dionix.dns` em `hosts/pi/default.nix`. Ele precisa de um token da API. Troque a senha padrão do painel (`admin`/`admin`) e gere o token no Pi:
+
+```sh
+read -rs p && curl -s --get http://127.0.0.1:5380/api/user/createToken \
+  --data-urlencode user=admin --data-urlencode "pass=$p" --data-urlencode tokenName=nixos |
+  jq -r .token | sudo install -Dm600 /dev/stdin /var/lib/secrets/technitium-token
+sudo systemctl restart technitium-zona
+```
+
+Na Cloudflare, crie o mesmo curinga, para quem não usa o Pi como DNS (o próprio server, o roteador, celulares fora da tailnet): *DNS → Records → Add*, tipo `A`, nome `*`, IP `10.42.1.2`, **DNS only** (nuvem cinza). Ele só funciona dentro de casa ou pela tailnet, porque o IP é da rede local.
+
+O Pi não deve usar o MagicDNS (`--accept-dns=false`). Se um `tailscale up` manual desfez isso (`/etc/resolv.conf` com `100.100.100.100`), rode `sudo systemctl restart tailscaled-set`.
 
 Confira:
 

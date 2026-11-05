@@ -1,6 +1,6 @@
 # Raspberry Pi 4 do homelab (10.42.1.2): roteador do Tailscale, DNS
-# (Technitium), proxy reverso (Nginx), login central (lldap), página de status e
-# backup no Google Drive. Substitui o core-compose (Traefik, Technitium e
+# (Technitium), proxy reverso (Nginx), login central (lldap), página de status,
+# página inicial e backup no Google Drive. Substitui o core-compose (Traefik, Technitium e
 # Portainer em Docker). Não tem hardware-configuration.nix: a imagem SD já
 # define os sistemas de arquivos (modules/nixos/raspberry-pi.nix).
 {
@@ -24,6 +24,7 @@ in
     ../../modules/nixos/ldap.nix
     ../../modules/nixos/homelab.nix
     ../../modules/nixos/status.nix
+    ../../modules/nixos/homepage.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
@@ -36,12 +37,24 @@ in
   };
 
   # <serviço>.vault76.com.br. Dentro de casa (e pela tailnet) o Technitium
-  # responde *.vault76.com.br com o IP do Pi; de fora vale o DNS da Cloudflare.
+  # responde *.vault76.com.br com o IP do Pi; a Cloudflare tem o mesmo curinga,
+  # para quem não usa o Pi como DNS (docs/homelab.md).
+  dionix.dns = {
+    zone = config.dionix.homelab.domain;
+    records = {
+      "@" = config.dionix.homelab.pi;
+      "*" = config.dionix.homelab.pi;
+      pi = config.dionix.homelab.pi;
+      inherit server;
+    };
+  };
+
   dionix.proxy = {
     inherit (config.dionix.homelab) domain;
     acme.enable = true; # token em /var/lib/secrets/acme.env (CF_DNS_API_TOKEN=...)
 
-    # ldap.<domínio> vem do ldap.nix e status.<domínio> do status.nix
+    # ldap.<domínio> vem do ldap.nix, status.<domínio> do status.nix e
+    # home.<domínio> do homepage.nix
     hosts = {
       dns = "http://127.0.0.1:5380"; # painel do Technitium
 

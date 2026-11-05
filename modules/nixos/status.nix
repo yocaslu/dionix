@@ -18,8 +18,12 @@ let
     url = "https://${name}.${domain}";
     interval = "1m";
     client = local;
-    # 401 conta como no ar (serviços com login no proxy, como o NUT)
-    conditions = [ "[STATUS] < 500" ];
+    # 401 conta como no ar (serviços com login no proxy, como o NUT). Sem o
+    # [CONNECTED], uma falha de DNS ou de conexão (status 0) também passaria.
+    conditions = [
+      "[CONNECTED] == true"
+      "[STATUS] < 500"
+    ];
   };
 
   porta = name: endpoint: {
