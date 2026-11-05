@@ -45,16 +45,24 @@ in
         acltype = "posixacl";
         mountpoint = "none";
       };
+      # Montados só pelo systemd (fileSystems, gerado pelo disko): com o
+      # mountpoint do ZFS, o zfs-mount.service disputava o mesmo ponto no boot e
+      # quem perdia derrubava o local-fs.target (modo de emergência). Legacy
+      # também mantém o RequiresMountsFor dos serviços, que precisa da unidade .mount.
       datasets = {
         # Arquivos grandes e sequenciais: blocos de 1 MiB
         data = {
           type = "zfs_fs";
           mountpoint = "/srv/data";
-          options.recordsize = "1M";
+          options = {
+            mountpoint = "legacy";
+            recordsize = "1M";
+          };
         };
         nextcloud = {
           type = "zfs_fs";
           mountpoint = "/var/lib/nextcloud/data";
+          options.mountpoint = "legacy";
         };
       };
     };
