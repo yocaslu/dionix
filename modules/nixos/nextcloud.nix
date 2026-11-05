@@ -22,7 +22,7 @@
   ...
 }:
 let
-  inherit (config.dionix.homelab) domain pi;
+  inherit (config.dionix.homelab) domain pi server;
   nc = config.services.nextcloud;
   occ = lib.getExe nc.occ;
   url = name: "https://${name}.${domain}";
@@ -130,7 +130,13 @@ in
     # Notificações instantâneas (sincronização sem polling)
     notify_push.enable = true;
     settings = {
-      trusted_proxies = [ pi ];
+      # O Pi publica o Nextcloud. O próprio server entra porque o notify_push
+      # testa a instalação pelo endereço público: a requisição sai daqui, passa
+      # pelo Pi e volta com este IP no X-Forwarded-For
+      trusted_proxies = [
+        pi
+        server
+      ];
       overwriteprotocol = "https";
       "overwrite.cli.url" = url "nextcloud";
       default_phone_region = "BR";
