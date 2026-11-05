@@ -42,7 +42,6 @@ window#waybar {
 #battery,
 #custom-notification,
 #custom-sys,
-#custom-cava,
 #custom-updates,
 #custom-weather,
 #clock,
@@ -113,7 +112,6 @@ window#waybar {
 #custom-notification   { color: @base03@; }
 #custom-power          { color: @base08@; }
 #custom-sys            { color: @base04@; }
-#custom-cava           { color: @base0E@; }
 #custom-updates        { color: @base09@; }
 #custom-weather        { color: @base0C@; }
 

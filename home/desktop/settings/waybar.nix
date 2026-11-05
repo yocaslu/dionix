@@ -11,7 +11,6 @@ colors: {
   modules-center = [ "sway/window" ];
   modules-right = [
     "mpd"
-    "custom/cava"
     "idle_inhibitor"
     "pulseaudio"
     "network"
@@ -225,12 +224,6 @@ colors: {
   "custom/sys" = {
     format = "<span alpha='55%'>sys</span> «";
     tooltip-format = "bluetooth, temperatura e perfil de energia";
-  };
-  "custom/cava" = {
-    exec = "~/.config/waybar/scripts/cava.sh";
-    format = "{}";
-    tooltip = false;
-    escape = true;
   };
   "custom/updates" = {
     exec = "~/.config/waybar/scripts/updates.sh";
