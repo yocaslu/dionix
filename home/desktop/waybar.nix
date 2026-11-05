@@ -1,4 +1,4 @@
-# Waybar: barra inferior no visual TUI, com gaveta "sys «", cava, atualizações e clima
+# Waybar: barra inferior no visual TUI, com gaveta "sys «", atualizações e clima
 {
   config,
   lib,
@@ -16,14 +16,6 @@ let
       bashOptions = [ ];
     };
 
-  cavaScript = script "cava" (
-    with pkgs;
-    [
-      cava
-      gnused
-      coreutils
-    ]
-  );
   weatherScript = script "weather" (
     with pkgs;
     [
@@ -50,8 +42,6 @@ in
     systemd.enable = true;
     style = config.dionix.render (builtins.readFile ./files/waybar/style.css);
     settings.main = lib.recursiveUpdate base {
-      # Visualizador de áudio; some quando não há som
-      "custom/cava".exec = lib.getExe cavaScript;
       # Atualizações: compara o nixpkgs do flake.lock com o canal (antes pacman + AUR)
       "custom/updates" = {
         exec = lib.getExe updatesScript;

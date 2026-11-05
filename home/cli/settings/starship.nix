@@ -1,9 +1,15 @@
 # Convertido de dot_config/starship/starship.toml (yocaslu/dotfiles)
 colors: {
   "$schema" = "https://starship.rs/config-schema.json";
-  format = "$directory$git_branch$git_status$cmd_duration$status$line_break$character";
+  format = "$hostname$directory$git_branch$git_status$cmd_duration$status$line_break$character";
   add_newline = true;
   palette = "tema";
+  # Nome da máquina sempre visível (não só no SSH), para distinguir os hosts
+  hostname = {
+    ssh_only = false;
+    format = "[$ssh_symbol$hostname]($style) ";
+    style = "bold teal";
+  };
   directory = {
     style = "bold mauve";
     truncation_length = 3;
