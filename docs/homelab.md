@@ -41,7 +41,7 @@ No roteador da operadora, reserve por DHCP:
 | IP | Para |
 |---|---|
 | `10.42.1.2` | Pi |
-| `10.42.1.22` | server: o **MAC da placa Realtek PCIe** (`enp2s0`; o server pega IP por DHCP em qualquer porta Ethernet) |
+| `10.42.1.22` | server: o **MAC da rede onboard** (`eno1`, `64:1c:67:73:ae:b1`; o server pega IP por DHCP em qualquer porta Ethernet) |
 
 ## 2. Instalar o server (HD gravado no desktop)
 

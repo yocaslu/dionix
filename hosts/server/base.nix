@@ -18,7 +18,7 @@
   };
 
   # Rede: qualquer porta Ethernet, por DHCP. Reserve 10.42.1.22 para o MAC da
-  # placa Realtek (enp2s0) no roteador da operadora.
+  # rede onboard (eno1) no roteador da operadora.
   networking.useNetworkd = true;
   systemd.network.networks."10-ethernet" = {
     matchConfig.Type = "ether";

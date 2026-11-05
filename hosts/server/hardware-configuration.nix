@@ -1,5 +1,5 @@
 # Máquina do server: i7-4790 (Haswell), 32 GB de RAM, vídeo pela iGPU (HD 4600),
-# rede pela placa Realtek RTL8168 PCIe (a Intel I217-LM onboard fica de reserva).
+# rede pela Intel I217-LM onboard (placa-mãe trocada; a Realtek PCIe saiu).
 # Os sistemas de arquivos vêm do disko.nix, não daqui.
 #
 # Conferido com `nixos-generate-config --show-hardware-config` no próprio server
@@ -15,8 +15,7 @@
     "usbhid"
     "usb_storage"
     "sd_mod"
-    # Placas de rede (Realtek RTL8168 e Intel I217-LM): rede já no initrd
-    "r8169"
+    # Rede onboard (Intel I217-LM): já no initrd
     "e1000e"
   ];
   boot.kernelModules = [ "kvm-intel" ];
