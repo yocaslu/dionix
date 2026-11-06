@@ -75,11 +75,14 @@ in
           exit 0
         fi
 
+        # Ignora espaços e caracteres de controle que vêm junto ao colar o token
+        chave=$(tr -d '[:space:][:cntrl:]' < ${token})
+
         # GET na API com o token; falha se a resposta não for "ok"
         chamar() {
           rota=$1; shift
           resposta=$(curl -sS --fail --retry 10 --retry-connrefused --retry-delay 3 --get \
-            "${api}/$rota" --data-urlencode "token=$(cat ${token})" "$@")
+            "${api}/$rota" --data-urlencode "token=$chave" "$@")
           status=$(jq -r .status <<< "$resposta")
           if [ "$status" != ok ]; then
             echo "$rota: $(jq -r '.errorMessage // .status' <<< "$resposta")" >&2
