@@ -2,8 +2,10 @@
 #
 # A configuração (bloqueio, encaminhadores) é feita no painel web e fica
 # em /var/lib/private/technitium-dns-server: faça backup por lá (Settings → Backup).
-# O painel não é exposto direto na rede: ele escuta na 5380 e é acessado pelo
-# proxy reverso (dns.<domínio>, veja reverse-proxy.nix) ou por túnel SSH:
+# O painel não é exposto direto na rede: ele escuta só em 127.0.0.1:5380 (o
+# technitium-zona ajusta isso pela API, porque o Tailscale aceita o tráfego da
+# tailnet antes do firewall do NixOS) e é acessado pelo proxy reverso
+# (dns.<domínio>, veja reverse-proxy.nix) ou por túnel SSH:
 #   ssh -L 5380:localhost:5380 dio@pi   →   http://localhost:5380
 #
 # A zona do domínio (dionix.dns.zone) é criada pela API, com o token em
@@ -57,7 +59,7 @@ in
 
     # Cria a zona e os registros pela API (idempotente; roda a cada mudança da lista)
     systemd.services.technitium-zona = lib.mkIf (cfg.zone != null) {
-      description = "Zona ${cfg.zone} no Technitium";
+      description = "Zona ${cfg.zone} e painel local do Technitium";
       wantedBy = [ "multi-user.target" ];
       after = [ "technitium-dns-server.service" ];
       requires = [ "technitium-dns-server.service" ];
@@ -102,6 +104,13 @@ in
 
         ${lib.concatStrings (lib.mapAttrsToList registro cfg.records)}
         echo "registros de ${cfg.zone}: ${lib.concatStringsSep ", " (lib.attrNames cfg.records)}"
+
+        # Painel só no loopback (o Nginx do proxy chega por aqui). Fica por último:
+        # mudar o endereço reinicia o painel e derruba a API por alguns segundos
+        if ! chamar settings/get | jq -e '.response.webServiceLocalAddresses == ["127.0.0.1"]' >/dev/null; then
+          chamar settings/set --data-urlencode "webServiceLocalAddresses=127.0.0.1" >/dev/null
+          echo "painel restrito a 127.0.0.1:5380"
+        fi
       '';
     };
   };
