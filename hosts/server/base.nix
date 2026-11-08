@@ -29,6 +29,19 @@
     linkConfig.RequiredForOnline = "routable";
   };
 
+  # Wake-on-LAN (pacote mágico) em qualquer porta Ethernet: o Pi acorda o server
+  # da suspensão ou do desligamento (server-wake.nix). Mantém a política
+  # padrão de nomes, que um .link próprio substituiria.
+  systemd.network.links."10-wake-on-lan" = {
+    matchConfig.Type = "ether";
+    linkConfig = {
+      NamePolicy = "keep kernel database onboard slot path";
+      AlternativeNamesPolicy = "database onboard slot path";
+      MACAddressPolicy = "persistent";
+      WakeOnLan = "magic";
+    };
+  };
+
   boot.supportedFilesystems.zfs = true;
   # O ZFS exige um ID fixo por máquina, o mesmo nos dois sistemas: o pool criado
   # no bootstrap precisa ser importado pelo server sem forçar.
