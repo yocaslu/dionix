@@ -155,6 +155,16 @@ zpool status tank          # espelho ONLINE nos dois discos
 vainfo --display drm --device /dev/dri/by-path/pci-0000:00:02.0-render   # VA-API da iGPU
 ```
 
+**Wake-on-LAN.** Na BIOS do server, ative *Wake on LAN* / *Power On by PCI-E* e desligue *ErP* / *Deep Sleep* (com eles, a placa de rede fica sem energia). Depois confira e teste, primeiro com a suspensão e depois com o desligamento:
+
+```sh
+ssh dio@10.42.1.22 'ethtool eno1 | grep Wake-on; cat /sys/power/mem_sleep'   # "Wake-on: g" e "[deep]"
+ssh -t dio@10.42.1.22 sudo systemctl suspend      # ou: sudo poweroff
+ssh dio@10.42.1.2 nix run nixpkgs#wakeonlan -- -i 10.42.1.255 64:1c:67:73:ae:b1
+```
+
+O server deve voltar a responder em segundos (suspenso) ou em um a três minutos (desligado).
+
 ## 4. Ligar os serviços pelos painéis
 
 **Nextcloud**: Collabora, Whiteboard, Talk e a pasta *Jogos do Switch* são configurados sozinhos (`nextcloud-apps-config.service`). Confira em *Administração → Talk* que o servidor de sinalização aparece com ✔. Para o login pelo lldap, ative o app *LDAP user and group backend*:

@@ -18,5 +18,10 @@
       default = "10.42.1.22";
       description = "Host `server` (NixOS direto no hardware), na rede de casa.";
     };
+    serverMac = lib.mkOption {
+      type = lib.types.str;
+      default = "64:1c:67:73:ae:b1";
+      description = "MAC da rede onboard do `server` (eno1), para o Wake-on-LAN.";
+    };
   };
 }
