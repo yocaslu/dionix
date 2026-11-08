@@ -37,6 +37,10 @@
     desktopManager.xfce.enable = true;
   };
 
+  # Thunar (do XFCE, também usado no Sway): "Extrair aqui" e "Compactar" no
+  # menu do botão direito, pelo Xarchiver (home/desktop/apps.nix)
+  programs.thunar.plugins = [ pkgs.thunar-archive-plugin ];
+
   # Login no terminal (tuigreet) com as sessões Sway e XFCE
   services.greetd = {
     enable = true;
