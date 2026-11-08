@@ -1,6 +1,7 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
 # (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
-# Zed), senhas (rbw), música (spotify_player) e os apps padrão
+# Zed), escritório (OnlyOffice), senhas (rbw), música (spotify_player) e os
+# apps padrão
 {
   config,
   lib,
@@ -74,6 +75,8 @@ in
     # Configs continuam editáveis em ~/.config, fora do Nix
     vscode
     zed-editor
+    # Documentos, planilhas e apresentações (formatos do Office e OpenDocument)
+    onlyoffice-desktopeditors
     # Cliente Bitwarden de terminal, sem Electron e com senha pedida no terminal
     rbw
     pinentry-curses
@@ -116,6 +119,18 @@ in
       // assoc "org.pwmt.zathura.desktop" [
         "application/pdf"
         "application/epub+zip"
+      ]
+      // assoc "onlyoffice-desktopeditors.desktop" [
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        "application/msword"
+        "application/vnd.ms-excel"
+        "application/vnd.ms-powerpoint"
+        "application/vnd.oasis.opendocument.text"
+        "application/vnd.oasis.opendocument.spreadsheet"
+        "application/vnd.oasis.opendocument.presentation"
+        "application/rtf"
       ]
       // assoc "imv.desktop" [
         "image/png"
