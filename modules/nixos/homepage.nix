@@ -134,7 +134,7 @@ in
         {
           Servidores = {
             style = "row";
-            columns = 2;
+            columns = 3;
           };
         }
       ]
@@ -165,6 +165,15 @@ in
             (pct "tank" ''100 * zfs_pool_allocated_bytes{pool="tank"} / zfs_pool_size_bytes{pool="tank"}'')
             "x86_pkg_temp"
           )
+          # O server dorme quando ninguém o usa (server-sleep.nix); acessar um
+          # serviço já o acorda, e este cartão serve para o SSH e o FTP do Switch
+          {
+            "Acordar o server" = {
+              description = "Wake-on-LAN pelo Pi";
+              icon = "mdi-power";
+              href = "${url "home"}/acordar";
+            };
+          }
           (maquina "pi" "Raspberry Pi 4: proxy, DNS e LDAP"
             (pct "cartão SD" ''100 * (1 - node_filesystem_avail_bytes{host="pi",mountpoint="/"} / node_filesystem_size_bytes{host="pi",mountpoint="/"})'')
             "cpu-thermal"

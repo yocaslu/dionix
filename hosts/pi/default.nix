@@ -25,6 +25,7 @@ in
     ../../modules/nixos/homelab.nix
     ../../modules/nixos/status.nix
     ../../modules/nixos/homepage.nix
+    ../../modules/nixos/server-wake.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
