@@ -1,7 +1,7 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
 # (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
-# Zed), escritório (OnlyOffice), senhas (rbw), música (spotify_player) e os
-# apps padrão
+# Zed), escritório (OnlyOffice), arquivos compactados (Xarchiver), senhas
+# (rbw), música (spotify_player) e os apps padrão
 {
   config,
   lib,
@@ -77,6 +77,8 @@ in
     zed-editor
     # Documentos, planilhas e apresentações (formatos do Office e OpenDocument)
     onlyoffice-desktopeditors
+    # Arquivos compactados (zip, 7z, rar, tar.*); já traz os programas de cada formato
+    xarchiver
     # Cliente Bitwarden de terminal, sem Electron e com senha pedida no terminal
     rbw
     pinentry-curses
@@ -119,6 +121,27 @@ in
       // assoc "org.pwmt.zathura.desktop" [
         "application/pdf"
         "application/epub+zip"
+      ]
+      # O plugin de quadrinhos do zathura também declara application/zip; sem
+      # isto, o zathura viraria o padrão para qualquer .zip
+      // assoc "xarchiver.desktop" [
+        "application/zip"
+        "application/x-7z-compressed"
+        "application/vnd.rar"
+        "application/x-rar"
+        "application/x-tar"
+        "application/gzip"
+        "application/x-compressed-tar"
+        "application/x-bzip2"
+        "application/x-bzip-compressed-tar"
+        "application/x-xz"
+        "application/x-xz-compressed-tar"
+        "application/zstd"
+        "application/x-zstd-compressed-tar"
+      ]
+      // assoc "org.pwmt.zathura-cb.desktop" [
+        "application/x-cbz"
+        "application/x-cbr"
       ]
       // assoc "onlyoffice-desktopeditors.desktop" [
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
