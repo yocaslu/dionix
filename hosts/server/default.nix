@@ -8,6 +8,7 @@
 #   media.nix         Jellyfin (VA-API na iGPU), Seerr, suite Arr, qBittorrent
 #   switch-ftp.nix    FTP só leitura dos jogos do Switch para a rede de casa
 #   monitoring.nix    Prometheus + Grafana
+#   server-sleep.nix  suspende quando ninguém usa (o Pi acorda por Wake-on-LAN)
 #
 # Instalação e atualização: docs/homelab.md.
 {
@@ -26,7 +27,23 @@
     # NUT pausado: precisa de preparativos no Switch (switch-nut.nix fica para depois)
     ../../modules/nixos/monitoring.nix
     ../../modules/nixos/backup.nix
+    ../../modules/nixos/server-sleep.nix
   ];
+
+  # Suspende após 45 min sem uso; as tarefas da madrugada acordam a máquina
+  dionix.serverSleep = {
+    enable = true;
+    blockers = [
+      "restic-backups-gdrive.service"
+      "postgresqlBackup-nextcloud.service"
+      "nixos-rebuild-switch-to-configuration.service"
+    ];
+    wakeTimers = [
+      "postgresqlBackup-nextcloud"
+      "restic-backups-gdrive"
+      "zfs-scrub"
+    ];
+  };
 
   # O DNS é o Technitium do Pi (resolve *.vault76.com.br para o proxy:
   # o Nextcloud e o Collabora conversam entre si por esses nomes)
