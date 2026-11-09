@@ -144,16 +144,17 @@ in
     });
 
     # Ao voltar (e no boot): marca a hora, para a carência de 15 min, e avisa o
-    # Pi que a máquina não está mais dormindo
+    # Pi que a máquina não está mais dormindo. O suspend.target só é alcançado
+    # depois que a máquina acorda, então `After` faz o serviço rodar na volta
     systemd.tmpfiles.rules = [ "d /run/server-sleep 0755 root root -" ];
     systemd.services.server-sleep-volta = {
       description = "Marca a volta do server";
       wantedBy = [
-        "post-resume.target"
+        "suspend.target"
         "multi-user.target"
       ];
       after = [
-        "post-resume.target"
+        "suspend.target"
         "network-online.target"
       ];
       wants = [ "network-online.target" ];
