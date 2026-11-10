@@ -112,6 +112,11 @@
                 bash ${./home/desktop/files/ssh-key-restore/ssh-key-restore-test.sh} ${./home/desktop/files/ssh-key-restore/ssh-key-restore.sh}
                 touch $out
               '';
+          # Testes do server-wake (Pi): pedidos simultâneos na volta do server
+          server-wake = pkgs.runCommand "server-wake-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./modules/nixos/files/server-wake-test.py} ${./modules/nixos/files/server-wake.py}
+            touch $out
+          '';
         };
     };
 }

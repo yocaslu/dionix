@@ -60,6 +60,14 @@ def acordar():
         s.sendto(b"\xff" * 6 + MAC * 16, (BROADCAST, 9))
 
 
+def apagar_dormindo():
+    # Dois pedidos podem chegar juntos quando o server volta: o outro já apagou
+    try:
+        os.remove(DORMINDO)
+    except FileNotFoundError:
+        pass
+
+
 def server_acordado():
     # O SSH responde assim que a rede volta, antes dos outros serviços
     try:
@@ -122,8 +130,7 @@ class Pedido(BaseHTTPRequestHandler):
             open(DORMINDO, "w").close()
             return self.responder(200, "ok\n")
         if self.path == "/sono/acordado" and self.command == "POST":
-            if os.path.exists(DORMINDO):
-                os.remove(DORMINDO)
+            apagar_dormindo()
             return self.responder(200, "ok\n")
         self.responder(404, "não encontrado\n")
 
@@ -131,8 +138,7 @@ class Pedido(BaseHTTPRequestHandler):
         host = self.headers.get("Host", "o serviço")
         if server_acordado():
             # A máquina está de pé: quem falhou foi o serviço
-            if os.path.exists(DORMINDO):
-                os.remove(DORMINDO)
+            apagar_dormindo()
             return self.pagina(
                 502,
                 "Serviço fora do ar",
@@ -162,5 +168,6 @@ class Pedido(BaseHTTPRequestHandler):
         self.tratar()
 
 
-porta = int(os.environ["PORT"])
-ThreadingHTTPServer(("127.0.0.1", porta), Pedido).serve_forever()
+if __name__ == "__main__":
+    porta = int(os.environ["PORT"])
+    ThreadingHTTPServer(("127.0.0.1", porta), Pedido).serve_forever()
