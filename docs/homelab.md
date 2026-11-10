@@ -70,6 +70,8 @@ Converter o antigo desktop (a reserva de `10.42.1.3` já existe):
 2. Depois do reboot: `ssh dio@10.42.1.3` e confira `hostname`, `ip -br a`, `swapon --show` e `nix config show | grep -E 'max-jobs|cores|min-free'`.
 3. Aplique o server (`nixos-rebuild switch --flake .#server …`) para o Prometheus coletar o forge, e confira `forge` em *Status → Targets*.
 
+O forge não aceita as rotas da tailnet (`--accept-routes=false`, como o Pi): a rede de casa que o Pi anuncia faria as respostas para a `10.42.1.0/24` saírem pelo Tailscale, e o forge sumiria da rede. Se ele ainda estiver sem a config nova, `sudo tailscale set --accept-routes=false` no console resolve na hora.
+
 O `boot` só troca o sistema no próximo boot. Se a rede não subir (o antigo desktop usava NetworkManager), a geração anterior continua no menu do systemd-boot, mas para escolhê-la é preciso monitor e teclado.
 
 ## 1. Rede
