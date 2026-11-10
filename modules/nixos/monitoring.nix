@@ -12,7 +12,7 @@
   ...
 }:
 let
-  inherit (config.dionix.homelab) domain pi;
+  inherit (config.dionix.homelab) domain pi forge;
   secrets = "/var/lib/secrets";
   node = host: "${host}:9100";
 
@@ -52,6 +52,10 @@ in
           {
             targets = [ (node pi) ];
             labels.host = "pi";
+          }
+          {
+            targets = [ (node forge) ];
+            labels.host = "forge";
           }
         ];
       }

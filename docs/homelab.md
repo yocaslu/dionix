@@ -1,11 +1,14 @@
 # Homelab
 
-Dois hosts NixOS, na mesma rede de casa (`10.42.1.0/24`), sem hypervisor e sem containers:
+Três hosts NixOS, na mesma rede de casa (`10.42.1.0/24`), sem hypervisor e sem containers:
 
 | Host | Máquina | O que roda |
 |---|---|---|
 | `pi` | Raspberry Pi 4, `10.42.1.2` | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), página de status (Gatus), página inicial (Homepage), roteador Tailscale da rede de casa e exit node |
 | `server` | i7-4790, 32 GB, iGPU HD 4600, `10.42.1.22` | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, FTP dos jogos do Switch, Prometheus + Grafana |
+| `forge` | i5-3470, 8 GB, SSD de 240 GB, `10.42.1.3` (antigo desktop) | sempre ligado, sem interface gráfica: builds (emulação ARM inclusive) e node exporter; Git, segredos, CI, cache, deploy e desenvolvimento nos próximos sub-projetos |
+
+Divisão: o `server` cuida de mídia, Nextcloud e monitoramento e continua suspendendo; o `pi`, de rede, DNS, proxy e LDAP; o `forge`, que não dorme, dos serviços que não podem depender do server acordar.
 
 O `server` guarda tudo num espelho ZFS de dois HDs de 1 TB (1 TB úteis, aguenta perder um disco); o sistema fica num HD de 500 GB.
 
@@ -50,6 +53,25 @@ journalctl -u server-wake -n 20       # no Pi
 
 Para desligar o recurso, `dionix.serverSleep.enable = false` em `hosts/server/default.nix`; o tempo fica em `dionix.serverSleep.idleMinutes`.
 
+## Forge (antigo desktop)
+
+O antigo desktop foi convertido no lugar, sem reinstalar, no servidor `forge` (`hosts/forge`, papel `modules/nixos/forge.nix`): rede por systemd-networkd (como no server), um build por vez com os 4 núcleos (`max-jobs = 1`, `cores = 4`), daemon do Nix com prioridade `idle`, zram mais um swapfile de 8 GB contra OOM, e o store do Nix contido no SSD (`nh clean` e `min-free`/`max-free`: com menos de 10 GiB livres, o Nix coleta lixo até sobrarem 30 GiB).
+
+Converter o antigo desktop (a reserva de `10.42.1.3` já existe):
+
+1. Da máquina de administração:
+
+   ```sh
+   nixos-rebuild boot --flake .#forge --target-host dio@10.42.1.3 --sudo --ask-sudo-password
+   ssh -t dio@10.42.1.3 sudo reboot
+   ```
+
+   Ou, com acesso local: `sudo nixos-rebuild boot --flake .#forge` e reboot.
+2. Depois do reboot: `ssh dio@10.42.1.3` e confira `hostname`, `ip -br a`, `swapon --show` e `nix config show | grep -E 'max-jobs|cores|min-free'`.
+3. Aplique o server (`nixos-rebuild switch --flake .#server …`) para o Prometheus coletar o forge, e confira `forge` em *Status → Targets*.
+
+O `boot` só troca o sistema no próximo boot. Se a rede não subir (o antigo desktop usava NetworkManager), a geração anterior continua no menu do systemd-boot, mas para escolhê-la é preciso monitor e teclado.
+
 ## 1. Rede
 
 No roteador da operadora, reserve por DHCP:
@@ -57,19 +79,20 @@ No roteador da operadora, reserve por DHCP:
 | IP | Para |
 |---|---|
 | `10.42.1.2` | Pi |
+| `10.42.1.3` | forge: o MAC da rede cabeada (DHCP em qualquer porta Ethernet) |
 | `10.42.1.22` | server: o **MAC da rede onboard** (`eno1`, `64:1c:67:73:ae:b1`; o server pega IP por DHCP em qualquer porta Ethernet) |
 
-## 2. Instalar o server (HD gravado no desktop)
+## 2. Instalar o server (HD gravado no forge)
 
-O server não instala a si mesmo: o HD de 500 GB é gravado no desktop, ligado por SATA, com o `server-bootstrap` (só rede e SSH). O HD é de 3,5" e precisa de 12 V, então não funciona num adaptador USB simples no notebook. Com o HD de volta no server, o pool é criado lá e a configuração completa é aplicada por SSH. Os serviços só sobem depois que o pool existe.
+O server não instala a si mesmo: o HD de 500 GB é gravado no forge, ligado por SATA, com o `server-bootstrap` (só rede e SSH). O HD é de 3,5" e precisa de 12 V, então não funciona num adaptador USB simples no notebook. Com o HD de volta no server, o pool é criado lá e a configuração completa é aplicada por SSH. Os serviços só sobem depois que o pool existe.
 
 > **Apaga o HD de 500 GB (passo 2) e os dois HDs de 1 TB (passo 4).** Tudo que estiver neles se perde.
 
-**No desktop:**
+**No forge** (pelo SSH, com o repositório clonado nele):
 
 1. **Chave SSH.** A máquina de onde você administra precisa entrar no server. Confira se a chave dela (`cat ~/.ssh/*.pub`) está em `openssh.authorizedKeys.keys`, no `modules/nixos/common.nix`; se não estiver, crie uma (`ssh-keygen -t ed25519`) e adicione a pública.
 
-2. **Grave o HD.** Com o desktop desligado, ligue o HD na SATA. Depois, ache o ID dele pelo tamanho e pelo modelo, e use sempre o caminho `by-id`:
+2. **Grave o HD.** Com o forge desligado, ligue o HD na SATA. Depois, ache o ID dele pelo tamanho e pelo modelo, e use sempre o caminho `by-id`:
 
    ```sh
    lsblk -o NAME,SIZE,TRAN,MODEL,SERIAL          # ~465G
@@ -80,7 +103,7 @@ O server não instala a si mesmo: o HD de 500 GB é gravado no desktop, ligado p
      --disk sistema /dev/disk/by-id/ata-…
    ```
 
-   O flake só enxerga arquivos no git: dê `git add` no que for novo antes de gravar. Desligue o desktop e passe o HD para o server.
+   O flake só enxerga arquivos no git: dê `git add` no que for novo antes de gravar. Desligue o forge e passe o HD para o server.
 
 **No server**, com o HD na SATA, o firmware em modo UEFI (CSM desligado) e o HD como primeiro no boot, depois de reservar o IP (seção 1):
 

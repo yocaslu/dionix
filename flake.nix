@@ -1,5 +1,5 @@
 {
-  description = "dionix: configuração NixOS + Home Manager do notebook, do desktop e do homelab";
+  description = "dionix: configuração NixOS + Home Manager do notebook e do homelab (server, forge e pi)";
 
   inputs = {
     # Base estável; pacotes pontuais vêm do unstable (pkgs.unstable.<nome>)
@@ -53,9 +53,9 @@
       # Hosts e a arquitetura de cada um
       hosts = {
         notebook = "x86_64-linux";
-        desktop = "x86_64-linux";
+        forge = "x86_64-linux";
         server = "x86_64-linux";
-        # Sistema mínimo gravado no HD do server pelo desktop (docs/homelab.md)
+        # Sistema mínimo gravado no HD do server pelo forge (docs/homelab.md)
         server-bootstrap = "x86_64-linux";
         pi = "aarch64-linux";
       };
@@ -79,7 +79,7 @@
     {
       nixosConfigurations = nixpkgs.lib.mapAttrs mkHost hosts;
 
-      # Imagem do cartão SD do Raspberry Pi (compila no notebook ou no desktop via emulação ARM)
+      # Imagem do cartão SD do Raspberry Pi (compila no notebook ou no forge via emulação ARM)
       packages.aarch64-linux.pi-image = self.nixosConfigurations.pi.config.system.build.sdImage;
 
       # `nix fmt` formata todos os arquivos .nix

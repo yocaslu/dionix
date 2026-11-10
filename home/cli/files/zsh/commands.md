@@ -194,19 +194,19 @@ Atualiza o `flake.lock` e aplica a nova configuração (`nh os switch --update`)
 Aplica a configuração do dionix sem atualizar o `flake.lock` (`nh os switch`).
 
 ## theme
-Troca a paleta de cores sem rebuild (só em notebook e desktop).
+Troca a paleta de cores sem rebuild (só no notebook).
 
 Uso: `theme` abre o menu (também em Super+x m) · `theme nord` aplica direto.
 Temas: `catppuccin-mocha`, `gruvbox-dark-medium`, `nord`, `tokyo-night-dark`.
 
 ## ssh-key-restore
-Instala em `~/.ssh` a chave SSH desta máquina, guardada no cofre do Bitwarden (só em notebook e desktop).
+Instala em `~/.ssh` a chave SSH desta máquina, guardada no cofre do Bitwarden (só no notebook).
 
 Uso: rode `rbw unlock` e depois `ssh-key-restore` (usa a entrada com o nome da máquina)
 ou `ssh-key-restore notebook`. Nunca sobrescreve uma chave existente.
 
 ## rpi-imager-root
-Abre o Raspberry Pi Imager com permissão para gravar cartões SD (só em notebook e desktop).
+Abre o Raspberry Pi Imager com permissão para gravar cartões SD (só no notebook).
 
 Uso: `rpi-imager-root`; a senha é pedida numa janela do polkit. O atalho do menu
 já usa este comando. Não use `sudo rpi-imager`: o Qt cai no X11 e não abre.

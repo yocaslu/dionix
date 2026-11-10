@@ -13,6 +13,11 @@
       default = "10.42.1.2";
       description = "Raspberry Pi: proxy reverso, DNS e LDAP.";
     };
+    forge = lib.mkOption {
+      type = lib.types.str;
+      default = "10.42.1.3";
+      description = "Host `forge`: servidor de desenvolvimento, na rede de casa.";
+    };
     server = lib.mkOption {
       type = lib.types.str;
       default = "10.42.1.22";

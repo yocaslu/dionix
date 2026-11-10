@@ -5,7 +5,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 | Host | Máquina | Papéis |
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
-| `desktop` | Desktop de desenvolvimento (rede cabeada) | base + estação de trabalho |
+| `forge` | Servidor de desenvolvimento headless, sempre ligado (antigo desktop: i5-3470, 8 GB, SSD de 240 GB, 10.42.1.3); Git, segredos, CI, cache e deploy nos próximos sub-projetos | base + builds (8 GB, limites de disco, emulação ARM) + node exporter |
 | `server` | Servidor do homelab, direto no hardware (i7-4790, iGPU HD 4600, 10.42.1.22) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
 | `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + status (Gatus) + backup |
 
@@ -27,7 +27,7 @@ modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
-  desktop.nix              Desempenho e baixo uso de recursos (só no desktop)
+  forge.nix                Rede cabeada, builds em 8 GB, limites do SSD e emulação ARM (só no forge)
   docker-host.nix          Docker, limpeza automática, oci-containers (sem uso: tudo é nativo)
   proxmox-vm.nix           agente QEMU, console serial, GRUB (sem uso: para VMs futuras)
   raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão
@@ -52,22 +52,22 @@ home/
   */files/                 o que continua como arquivo (CSS, Lua, scripts, módulos zsh)
 ```
 
-Cada papel em `modules/nixos/` traz junto a parte do Home Manager que lhe corresponde: a `common.nix` importa `home/cli` em todas as máquinas, e a `workstation.nix` importa `home/desktop` só no notebook e no desktop. Os servidores recebem o mesmo shell e os mesmos editores, sem nada gráfico.
+Cada papel em `modules/nixos/` traz junto a parte do Home Manager que lhe corresponde: a `common.nix` importa `home/cli` em todas as máquinas, e a `workstation.nix` importa `home/desktop` só no notebook. Os servidores recebem o mesmo shell e os mesmos editores, sem nada gráfico.
 
 ## Instalação
 
-### Instalação automática (notebook ou desktop)
+### Instalação automática (notebook ou forge)
 
 Com a ISO do NixOS iniciada em modo UEFI, o script **apaga o disco escolhido**, particiona, clona o repositório, gera a configuração de hardware, instala e pede a senha de `dio`:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/yocaslu/dionix/main/scripts/install-nixos.sh -o install-nixos.sh
-sudo bash install-nixos.sh desktop /dev/sda
+sudo bash install-nixos.sh notebook /dev/<disco>   # confira com lsblk
 ```
 
 Depois do primeiro boot, commite o `hardware-configuration.nix` gerado em `~/repos/dionix`.
 
-### Notebook ou desktop (manual)
+### Notebook (manual)
 
 1. Instale o NixOS pela ISO (instalador gráfico ou mínimo), com o usuário `dio`.
 2. Clone o repositório e gere a configuração de hardware da máquina:
@@ -79,7 +79,7 @@ Depois do primeiro boot, commite o `hardware-configuration.nix` gerado em `~/rep
    sudo nixos-generate-config --show-hardware-config > hosts/notebook/hardware-configuration.nix
    ```
 
-   Os `hardware-configuration.nix` do notebook e do desktop no repositório são os dessas máquinas: regenere se reinstalar ou formatar os discos (os UUIDs mudam). Use `hosts/desktop/` no desktop.
+   Os `hardware-configuration.nix` do notebook e do forge no repositório são os dessas máquinas: regenere se reinstalar ou formatar os discos (os UUIDs mudam). Use `hosts/forge/` no forge.
 
 3. Aplique (o flake precisa estar no git, inclusive o hardware-configuration novo):
 
@@ -94,9 +94,9 @@ Se os dotfiles do chezmoi já estiverem aplicados em `~`, o Home Manager renomei
 
 ### Servidor
 
-Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos dois HDs de 1 TB, declarados em `hosts/server/disko.nix` e `hosts/server/tank.nix`. O HD do sistema é gravado no desktop, ligado por SATA, com um sistema mínimo (`server-bootstrap`); o resto é aplicado por SSH, com o HD já no server. O passo a passo (rede, discos, instalação e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
+Direto no hardware, sem Proxmox: o sistema num HD de 500 GB e um espelho ZFS nos dois HDs de 1 TB, declarados em `hosts/server/disko.nix` e `hosts/server/tank.nix`. O HD do sistema é gravado no forge, ligado por SATA, com um sistema mínimo (`server-bootstrap`); o resto é aplicado por SSH, com o HD já no server. O passo a passo (rede, discos, instalação e ligação dos serviços pelos painéis) está em [`docs/homelab.md`](docs/homelab.md).
 
-Atualizações a partir do desktop:
+Atualizações a partir do notebook:
 
 ```sh
 nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo
@@ -104,7 +104,7 @@ nixos-rebuild switch --flake .#server --target-host dio@10.42.1.22 --sudo
 
 ### Raspberry Pi (roteador, DNS e proxy)
 
-O `pi` não tem instalador: o flake gera a imagem do cartão SD já configurada. O `notebook` e o `desktop` emulam ARM (`boot.binfmt.emulatedSystems`, no `workstation.nix`), então a imagem compila em qualquer um deles depois de um `rebuild`:
+O `pi` não tem instalador: o flake gera a imagem do cartão SD já configurada. O `notebook` e o `forge` emulam ARM (`boot.binfmt.emulatedSystems`, no `workstation.nix` e no `forge.nix`), então a imagem compila em qualquer um deles depois de um `rebuild`:
 
 ```sh
 nix build .#packages.aarch64-linux.pi-image
@@ -127,7 +127,7 @@ Antes do primeiro boot com o LDAP, crie a senha do admin: `sudo install -Dm600 /
 
 O Pi faz backup diário no Google Drive (`gdrive:homelab/pi`). A configuração do Drive e da senha está em [`docs/backup.md`](docs/backup.md).
 
-Atualizações a partir do desktop:
+Atualizações a partir do notebook:
 
 ```sh
 nixos-rebuild switch --flake .#pi --target-host dio@<ip-do-pi> --sudo

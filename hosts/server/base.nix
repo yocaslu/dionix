@@ -9,7 +9,7 @@
     ../../modules/nixos/common.nix
   ];
 
-  # O disko-install desliga canTouchEfiVariables ao gravar o HD no desktop (a
+  # O disko-install desliga canTouchEfiVariables ao gravar o HD no forge (a
   # NVRAM dele fica intacta) e o firmware do server inicia pelo caminho padrão
   # do ESP; a entrada de boot própria é criada na primeira atualização no server.
   boot.loader = {

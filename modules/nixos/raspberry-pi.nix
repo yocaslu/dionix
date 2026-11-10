@@ -16,7 +16,7 @@
   hardware.enableRedistributableFirmware = true;
 
   # O glances (common.nix) não tem cache para aarch64, e os testes dele levam
-  # dezenas de minutos na emulação ARM do notebook/desktop
+  # dezenas de minutos na emulação ARM do notebook/forge
   nixpkgs.overlays = [
     (final: prev: {
       glances = prev.glances.overridePythonAttrs { doCheck = false; };
