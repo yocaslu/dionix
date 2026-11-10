@@ -54,6 +54,9 @@ sub-projetos.
   E/S `idle`. Kernel `linuxPackages_latest`, do cache, sem kernel customizado.
 - Disco: o `nh clean` do `common.nix` continua; `min-free` e `max-free` do Nix
   limpam o store sozinhos quando o SSD enche.
+- Emulação ARM (`boot.binfmt.emulatedSystems = [ "aarch64-linux" ]`) no forge,
+  que vinha do `workstation.nix`: a imagem e as atualizações do Pi continuam
+  compilando nele, e o CI (sub-projeto 4) poderá usá-la.
 - Node exporter no forge e um alvo novo no Prometheus do server.
 - `CLAUDE.md`, `docs/homelab.md` e o comentário da chave SSH `desktop` no
   `common.nix` passam a falar do forge.
@@ -68,8 +71,6 @@ sub-projetos.
 - Podman e containers de desenvolvimento (sub-projeto 5); o Podman do
   `workstation.nix` sai junto com ele.
 - Upgrade para 16 GB de RAM.
-- Emulação ARM no forge. Ela vinha do `workstation.nix`; sem ele, a imagem do Pi
-  passa a compilar só no notebook.
 - Wake-on-LAN e suspensão do forge.
 - Renomear a entrada da chave SSH no Bitwarden (o `ssh-key-restore` não roda no
   forge, que não tem o `home/desktop`).
@@ -120,6 +121,9 @@ swapDevices = [ { device = "/var/lib/swapfile"; size = 8 * 1024; } ];
   o Nix coleta lixo até haver 30 GiB livres. Com todo o orçamento ocupado sobram
   ~60 GB, então o limite só age quando o store passa do seu pedaço.
 
+**Emulação ARM.** `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]`, a mesma
+linha do `workstation.nix`, que continua lá para o notebook.
+
 **Vem do `desktop.nix`.** `noatime` na raiz (menos escrita no SSD) e
 `documentation.nixos.enable = false`. Saem a VA-API da GPU, o zram com 100% da
 RAM e `swappiness` 180 (ajustes para uso só do zram, sem swap em disco), o
@@ -138,9 +142,9 @@ RAM e `swappiness` 180 (ajustes para uso só do zram, sem swap em disco), o
 |---|---|
 | `flake.nix` | `desktop` → `forge` em `hosts`; descrição e comentários |
 | `modules/nixos/common.nix` | comentário da chave: `# forge (antigo desktop)` |
-| `CLAUDE.md` | lista de hosts, `hardware-configuration.nix`, emulação ARM |
+| `CLAUDE.md` | lista de hosts, `hardware-configuration.nix`, emulação ARM (notebook ou forge) |
 | `docs/homelab.md` | forge nas tabelas de máquinas e de IPs, seção de conversão; a gravação do HD do server passa a ser no forge |
-| `README.md` | tabela de hosts, `desktop.nix`, instalação, atualizações, emulação ARM |
+| `README.md` | tabela de hosts, `desktop.nix`, instalação, atualizações, emulação ARM (notebook e forge) |
 | `docs/backup.md` | o remote do rclone é gerado no notebook (o forge não tem navegador) |
 | `scripts/install-nixos.sh` | hosts aceitos: `notebook` ou `forge` |
 | `home/cli/files/zsh/commands.md` | `theme`, `ssh-key-restore` e `rpi-imager-root`: só no notebook |
@@ -180,6 +184,7 @@ preciso monitor e teclado.
   - `networking.hostName = "forge"`, `useNetworkd = true`, `networkmanager.enable = false`;
   - `max-jobs = 1`, `cores = 4`, `min-free`/`max-free`, daemon `idle`;
   - swapfile de 8 GB e zram ligados;
+  - `aarch64-linux` em `boot.binfmt.emulatedSystems`;
   - node exporter ligado no forge;
   - o Prometheus do server com o alvo `10.42.1.3:9100` e `host = "forge"`;
   - o Home Manager do forge sem o Sway (`wayland.windowManager.sway.enable` falso);
