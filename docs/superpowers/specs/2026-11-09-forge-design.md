@@ -1,15 +1,43 @@
-# forge: o desktop vira servidor headless
+# forge: o desktop vira servidor de desenvolvimento
 
 Data: 2026-11-09
 
-Sub-projeto 1 do forge.
+Sub-projeto 1 de 5 do forge (decisões de 09/11/2026).
+
+## Contexto
+
+O desktop (i5-3470, 8 GB DDR3, Intel HD 2500, SSD SATA de 240 GB) deixa de ser
+estação de trabalho e vira o `forge`, sem interface gráfica e ligado 24/7. A
+divisão do homelab fica:
+
+| Host | Papel |
+|---|---|
+| `server` | mídia, Nextcloud, monitoramento; continua suspendendo |
+| `pi` | rede, DNS, proxy, LDAP |
+| `forge` | Git, segredos, CI, cache, deploy, desenvolvimento |
+
+Os serviços do forge (sub-projetos 2 a 5: sops-nix; Forgejo e Vaultwarden; CI,
+Attic e deploy; ambiente de desenvolvimento remoto) moram numa máquina sempre
+ligada, sem depender do server acordar nem atrapalhar o `server-sleep`.
+
+Orçamento do SSD, que orienta os limites de disco deste sub-projeto:
+
+| Uso | Espaço |
+|---|---|
+| Sistema + /nix/store | ~40 GB |
+| Cache binário (Attic) | ~60 GB |
+| Forgejo | ~20 GB |
+| Containers de desenvolvimento | ~40 GB |
+| Bancos de playground | ~20 GB |
+| Folga | ~60 GB |
 
 ## Objetivo
 
-Transformar o host `desktop` no servidor headless `forge`, em `10.42.1.3`,
-convertendo a máquina já instalada, sem reinstalar. O forge fica pronto para
-compilar com os 8 GB de RAM e o SSD de 240 GB da máquina, e aparece no
-monitoramento do server.
+Transformar o host `desktop` no servidor `forge`, em `10.42.1.3`, convertendo a
+máquina no lugar, sem reinstalar (não há nada a preservar nela). O forge fica
+pronto para compilar com 8 GB de RAM, com o store do Nix contido no seu pedaço
+do SSD, e aparece no monitoramento do server. Os serviços vêm nos próximos
+sub-projetos.
 
 ## Requisitos
 
@@ -19,22 +47,27 @@ monitoramento do server.
   Saem o `workstation.nix` e o `desktop.nix`; o `desktop.nix` é apagado, porque
   só esse host o usava.
 - Rede como no `hosts/server/base.nix`: systemd-networkd, DHCP em qualquer porta
-  Ethernet. O IP `10.42.1.3` vem de uma reserva no roteador, feita pelo usuário.
+  Ethernet. O IP `10.42.1.3` vem da reserva de DHCP que já existe no roteador.
 - Opção `dionix.homelab.forge` (padrão `10.42.1.3`) no `homelab.nix`.
 - Builds dentro de 8 GB: `max-jobs = 1`, `cores = 4`; zram (o do `common.nix`)
-  mais um swapfile de 8 GB; daemon do Nix com prioridade de CPU e de E/S `idle`.
+  mais um swapfile de 8 GB contra OOM; daemon do Nix com prioridade de CPU e de
+  E/S `idle`. Kernel `linuxPackages_latest`, do cache, sem kernel customizado.
 - Disco: o `nh clean` do `common.nix` continua; `min-free` e `max-free` do Nix
   limpam o store sozinhos quando o SSD enche.
 - Node exporter no forge e um alvo novo no Prometheus do server.
 - `CLAUDE.md`, `docs/homelab.md` e o comentário da chave SSH `desktop` no
   `common.nix` passam a falar do forge.
 - A aplicação é feita pelo usuário, com `nixos-rebuild boot --target-host` e
-  reboot. Nada aqui roda `nixos-rebuild switch`.
+  reboot, ou com acesso local. Nada aqui roda `nixos-rebuild switch`.
 
 ## Fora do escopo
 
-- Usar o forge como builder remoto ou cache das outras máquinas (próximos
-  sub-projetos).
+- Os serviços do forge e o backup deles (`dionix.backup` dos repositórios do
+  Forgejo, do banco do Vaultwarden e dos segredos): sub-projetos 2 a 5.
+- Usar o forge como builder remoto ou cache das outras máquinas (sub-projeto 4).
+- Podman e containers de desenvolvimento (sub-projeto 5); o Podman do
+  `workstation.nix` sai junto com ele.
+- Upgrade para 16 GB de RAM.
 - Emulação ARM no forge. Ela vinha do `workstation.nix`; sem ele, a imagem do Pi
   passa a compilar só no notebook.
 - Wake-on-LAN e suspensão do forge.
@@ -83,8 +116,9 @@ swapDevices = [ { device = "/var/lib/swapfile"; size = 8 * 1024; } ];
 - Swap: o zram do `common.nix` (zstd, 50% da RAM) tem prioridade maior que o
   swapfile, que só é usado quando o zram enche. O NixOS cria o arquivo no
   primeiro boot.
-- `min-free`/`max-free`: quando sobram menos de 10 GiB durante um build, o Nix
-  coleta lixo até liberar 30 GiB.
+- `min-free`/`max-free`: quando sobram menos de 10 GiB no SSD durante um build,
+  o Nix coleta lixo até haver 30 GiB livres. Com todo o orçamento ocupado sobram
+  ~60 GB, então o limite só age quando o store passa do seu pedaço.
 
 **Vem do `desktop.nix`.** `noatime` na raiz (menos escrita no SSD) e
 `documentation.nixos.enable = false`. Saem a VA-API da GPU, o zram com 100% da
@@ -114,18 +148,18 @@ RAM e `swappiness` 180 (ajustes para uso só do zram, sem swap em disco), o
 
 ## Aplicação (pelo usuário)
 
-1. No roteador, reservar `10.42.1.3` para o MAC da rede cabeada do desktop.
-2. Da máquina de administração, com o desktop no IP atual:
+1. Da máquina de administração (a reserva de `10.42.1.3` já existe):
 
    ```sh
-   nixos-rebuild boot --flake .#forge --target-host dio@<ip-atual> --sudo --ask-sudo-password
-   ssh -t dio@<ip-atual> sudo reboot
+   nixos-rebuild boot --flake .#forge --target-host dio@10.42.1.3 --sudo --ask-sudo-password
+   ssh -t dio@10.42.1.3 sudo reboot
    ```
 
-3. Depois do reboot: `ssh dio@10.42.1.3`, e conferir `hostname`, `ip -br a`,
-   `swapon --show` e o alvo `forge` em *Status → Targets* no Prometheus.
-4. Aplicar o server (`nixos-rebuild switch --flake .#server …`) para o alvo novo
-   entrar no Prometheus.
+   Ou, com acesso local: `sudo nixos-rebuild boot --flake .#forge` e reboot.
+2. Depois do reboot: `ssh dio@10.42.1.3`, e conferir `hostname`, `ip -br a`,
+   `swapon --show` e `nix config show | grep -E 'max-jobs|cores|min-free'`.
+3. Aplicar o server (`nixos-rebuild switch --flake .#server …`) para o alvo novo
+   entrar no Prometheus, e conferir `forge` em *Status → Targets*.
 
 O `boot` deixa a geração atual ativa até o reboot. Se a rede não subir no forge,
 a geração anterior (`desktop`) continua no menu do systemd-boot, mas para isso é
@@ -137,7 +171,6 @@ preciso monitor e teclado.
 |---|---|
 | Rede não sobe após o reboot (NetworkManager → networkd) | mesma config já validada no server; eval confere networkd ligado e NetworkManager desligado; geração anterior no menu de boot |
 | Tailscale mantém o nome `desktop` | o painel atualiza o nome se não foi renomeado à mão; se não, renomear em *Machines* |
-| Arquivos do `home/desktop` sobrando em `~` | o Home Manager remove os que gerou; o que já existia antes vira `.hm-bak` |
 
 ## Testes
 
