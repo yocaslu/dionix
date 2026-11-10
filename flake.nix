@@ -53,7 +53,7 @@
       # Hosts e a arquitetura de cada um
       hosts = {
         notebook = "x86_64-linux";
-        desktop = "x86_64-linux";
+        forge = "x86_64-linux";
         server = "x86_64-linux";
         # Sistema mínimo gravado no HD do server pelo desktop (docs/homelab.md)
         server-bootstrap = "x86_64-linux";
