@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala um host de boot UEFI (notebook ou desktop) a partir da ISO do NixOS.
+# Instala um host de boot UEFI (notebook ou forge) a partir da ISO do NixOS.
 # APAGA o disco inteiro: particiona, clona o repositório, gera a configuração
 # de hardware, instala e define a senha do usuário.
 #
@@ -48,8 +48,8 @@ disco="$2"
 [[ $EUID -eq 0 ]] || erro "rode como root (sudo)"
 # O servidor usa GRUB em BIOS e segue o caminho do README
 case "$host" in
-  notebook | desktop) ;;
-  *) erro "host inválido: $host (use notebook ou desktop)" ;;
+  notebook | forge) ;;
+  *) erro "host inválido: $host (use notebook ou forge)" ;;
 esac
 if [[ "$bootloader" == "sim" && ! -d /sys/firmware/efi ]]; then
   erro "a ISO não iniciou em modo UEFI"

@@ -1,4 +1,4 @@
-# Notebook e desktop: SwayFX como sessão principal, XFCE como alternativa,
+# Notebook: SwayFX como sessão principal, XFCE como alternativa,
 # áudio, fontes, portais, rede e ferramentas de desenvolvimento.
 # A parte do usuário (configs do Sway, Waybar, tema…) fica em home/desktop.
 {

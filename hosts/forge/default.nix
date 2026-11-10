@@ -1,6 +1,6 @@
-# Servidor de desenvolvimento, sem interface gráfica e ligado 24/7 (antigo
-# desktop: i5-3470, 8 GB de RAM e SSD de 240 GB). Os serviços (Git, segredos,
-# CI, cache e deploy) vêm nos próximos sub-projetos.
+# Servidor de desenvolvimento, sem interface gráfica e ligado 24/7.
+# Máquina: o antigo desktop (i5-3470, 8 GB de RAM e SSD de 240 GB).
+# Os serviços (Git, segredos, CI, cache e deploy) vêm nos próximos sub-projetos.
 { pkgs, ... }:
 {
   imports = [

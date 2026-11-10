@@ -61,7 +61,7 @@
     # Chaves públicas que entram por SSH, uma por dispositivo. As privadas ficam
     # no cofre do Bitwarden (rbw), em entradas com estes nomes.
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP4s/WUv8TiHRuLto1p+qdo1qMxNDOxGafbtWyBcFakv" # desktop
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP4s/WUv8TiHRuLto1p+qdo1qMxNDOxGafbtWyBcFakv" # forge (antigo desktop)
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJBYSY+cKN4E6DWfhhNeO6TTkXa1YmMhIWUlKHlDe/jp" # notebook
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMuVJJTfDDcNmSlKRiOWafeQ7EA24ybJuB94b3josEq6" # server
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPolzIouDyc8enAhkuAz6Sh0Q8BP4tANnR749+uVmKRy" # raspberrypi

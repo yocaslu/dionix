@@ -1,4 +1,4 @@
-# Ferramentas de terminal: usadas em todas as máquinas (notebook, desktop e servidores)
+# Ferramentas de terminal: usadas em todas as máquinas (notebook e servidores)
 {
   imports = [
     ./colors.nix

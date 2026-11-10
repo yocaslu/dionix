@@ -9,10 +9,10 @@ Os dois hosts NixOS fazem backup diário com **restic** num repositório própri
 
 Retenção: 7 diários, 4 semanais e 6 mensais. Cada execução também confere 1% dos dados já enviados. Os snapshots do ZFS (`storage.nix`) cobrem o curto prazo, sem depender da internet: recuperar algo apagado hoje é copiar de `/srv/data/.zfs/snapshot/`.
 
-## 1. Conta do Google Drive (uma vez, no desktop)
+## 1. Conta do Google Drive (uma vez, no notebook)
 
 1. **Client ID próprio** (recomendado: o padrão do rclone é compartilhado e sofre limite de requisições). No [Google Cloud Console](https://console.cloud.google.com/), crie um projeto, ative a *Google Drive API*, configure a tela de consentimento (tipo *Externo*, publique o app para o token não expirar em 7 dias) e crie uma credencial *OAuth → App para computador*.
-2. Gere o remote no desktop, que tem navegador:
+2. Gere o remote no notebook, que tem navegador:
 
    ```sh
    nix shell nixpkgs#rclone -c rclone config
