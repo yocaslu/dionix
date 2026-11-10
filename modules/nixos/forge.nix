@@ -17,6 +17,11 @@
     linkConfig.RequiredForOnline = "routable";
   };
 
+  # O forge fica na rede de casa, que o Pi anuncia para a tailnet: aceitando essa
+  # rota, as respostas para a 10.42.1.0/24 saíam pelo tailscale0 e o forge sumia
+  # da rede (sem ping nem SSH). Aplicado com `tailscale set` a cada boot, como no Pi.
+  services.tailscale.extraSetFlags = [ "--accept-routes=false" ];
+
   nix = {
     settings = {
       # Um build por vez, com os 4 núcleos: vários compiladores juntos estouram a RAM
