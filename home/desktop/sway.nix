@@ -234,6 +234,25 @@ in
           always = true;
         }
       ];
+
+      # Workspace 1 no monitor externo e 10 na tela do notebook. A segunda saída é
+      # a reserva: sem o HDMI (ou com a tampa fechada) o workspace vai para a outra.
+      workspaceOutputAssign = [
+        {
+          workspace = "1";
+          output = [
+            "HDMI-A-1"
+            "eDP-1"
+          ];
+        }
+        {
+          workspace = "10";
+          output = [
+            "eDP-1"
+            "HDMI-A-1"
+          ];
+        }
+      ];
     };
 
     extraConfig = ''
