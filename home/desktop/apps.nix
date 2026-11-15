@@ -1,7 +1,7 @@
 # Terminal (Alacritty), PDF (zathura), imagens (imv), vídeo (mpv), capturas
 # (grim + slurp + swappy), navegador (Firefox), editores gráficos (VS Code e
 # Zed), escritório (OnlyOffice), arquivos compactados (Xarchiver), senhas
-# (rbw), música (spotify_player) e os apps padrão
+# (rbw), música (spotify_player), torrents (qBittorrent) e os apps padrão
 {
   config,
   lib,
@@ -86,6 +86,8 @@ in
     # Grava imagens em cartões SD (Raspberry Pi OS, ou a imagem do pi deste flake)
     rpi-imager
     rpiImagerRoot
+    # Cliente de torrent (abre os .torrent e os links magnet, abaixo)
+    qbittorrent
   ];
 
   # O atalho do menu abre já com permissão de gravar (mesmo nome do .desktop do
@@ -171,6 +173,10 @@ in
         "video/quicktime"
         "video/x-msvideo"
         "video/mpeg"
+      ]
+      // assoc "org.qbittorrent.qBittorrent.desktop" [
+        "application/x-bittorrent"
+        "x-scheme-handler/magnet"
       ];
   };
 }
