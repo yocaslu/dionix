@@ -6,7 +6,7 @@ Três hosts NixOS, na mesma rede de casa (`10.42.1.0/24`), sem hypervisor e sem 
 |---|---|---|
 | `pi` | Raspberry Pi 4, `10.42.1.2` | proxy reverso (HTTPS de tudo), DNS (Technitium), LDAP (lldap), página de status (Gatus), página inicial (Homepage), roteador Tailscale da rede de casa e exit node |
 | `server` | i7-4790, 32 GB, iGPU HD 4600, `10.42.1.22` | Nextcloud + Collabora + Whiteboard + Talk (sinalização e Janus), Jellyfin, Seerr, suite Arr, qBittorrent, FTP dos jogos do Switch, Prometheus + Grafana |
-| `forge` | i5-3470, 8 GB, SSD de 240 GB, `10.42.1.3` (antigo desktop) | sempre ligado, sem interface gráfica: builds (emulação ARM inclusive) e node exporter; Git, segredos, CI, cache, deploy e desenvolvimento nos próximos sub-projetos |
+| `forge` | i5-3470, 12 GB, SSD de 240 GB, `10.42.1.3` (antigo desktop) | sempre ligado, sem interface gráfica: builds (emulação ARM inclusive) e node exporter; Git, segredos, CI, cache, deploy e desenvolvimento nos próximos sub-projetos |
 
 Divisão: o `server` cuida de mídia, Nextcloud e monitoramento e continua suspendendo; o `pi`, de rede, DNS, proxy e LDAP; o `forge`, que não dorme, dos serviços que não podem depender do server acordar.
 
@@ -55,7 +55,7 @@ Para desligar o recurso, `dionix.serverSleep.enable = false` em `hosts/server/de
 
 ## Forge (antigo desktop)
 
-O antigo desktop foi convertido no lugar, sem reinstalar, no servidor `forge` (`hosts/forge`, papel `modules/nixos/forge.nix`): rede por systemd-networkd (como no server), um build por vez com os 4 núcleos (`max-jobs = 1`, `cores = 4`), daemon do Nix com prioridade `idle`, zram mais um swapfile de 8 GB contra OOM, e o store do Nix contido no SSD (`nh clean` e `min-free`/`max-free`: com menos de 10 GiB livres, o Nix coleta lixo até sobrarem 30 GiB).
+O antigo desktop foi convertido no lugar, sem reinstalar, no servidor `forge` (`hosts/forge`, papel `modules/nixos/forge.nix`): rede por systemd-networkd (como no server), dois builds por vez com 2 núcleos cada (`max-jobs = 2`, `cores = 2`), daemon do Nix com prioridade `idle`, zram mais um swapfile de 8 GB contra OOM, e o store do Nix contido no SSD (`nh clean` e `min-free`/`max-free`: com menos de 10 GiB livres, o Nix coleta lixo até sobrarem 30 GiB).
 
 Converter o antigo desktop (a reserva de `10.42.1.3` já existe):
 
