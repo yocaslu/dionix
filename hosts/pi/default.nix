@@ -43,6 +43,9 @@ in
     };
   };
 
+  # O cache do forge responde 404 com ele desligado, sem acordá-lo
+  dionix.wake.ignore = [ "cache" ];
+
   # Rede de casa anunciada para a tailnet: de fora, os serviços e o server são
   # alcançados por aqui
   dionix.tailscaleRouter = {
@@ -92,6 +95,20 @@ in
       prowlarr = em 9696;
       bazarr = em 6767;
       qbittorrent = em 8081;
+
+      # forge: cache binário (forge-cache.nix). Desligado = "não tenho" (404 em
+      # 2 s): o Nix do notebook segue para o cache oficial, sem esperar nem acordar
+      cache = {
+        upstream = "http://${config.dionix.homelab.forge}:5000";
+        extraConfig = ''
+          proxy_connect_timeout 2s;
+          error_page 502 504 =404 /404;
+          location = /404 {
+            internal;
+            return 404;
+          }
+        '';
+      };
 
       # server: monitoramento (monitoring.nix)
       grafana = em 3000;

@@ -6,6 +6,7 @@
   imports = [
     ./homelab.nix
     ./forge-update.nix
+    ./forge-cache.nix
     ./host-sleep.nix
   ];
 
