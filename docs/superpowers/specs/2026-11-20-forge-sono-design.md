@@ -18,7 +18,7 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
 
 ## Objetivos
 
-1. **Dormir rápido.** O forge suspende (S3) após 20 min sem uso, com as mesmas
+1. **Dormir rápido.** O forge **desliga** (S5) após 20 min sem uso, com as mesmas
    regras de "parado" do server (sem acesso real pelo proxy do Pi, sem conexões
    abertas nos serviços, sem build ou unidade bloqueadora rodando).
 2. **Acordar sob demanda.** Acesso pelo proxy do Pi a um serviço do forge
@@ -60,9 +60,16 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
   `/var/lib/secrets` do forge (criados à mão ou no primeiro boot). A chave
   **pública** do cache vai no repositório.
 - O repositório `yocaslu/dionix` é público e só aceita squash merge.
-- O Wake-on-LAN e o S3 do forge ainda não foram conferidos: a BIOS e a placa
-  `enp2s0` precisam suportar. É o primeiro passo do plano; sem isso o
-  sub-projeto não segue.
+- A placa-mãe do forge (Goldentec H61, BIOS 4.6.5) não tem S3: o ACPI só
+  oferece S0, S4 e S5 (`ACPI: PM: (supports S0 S4 S5)`, conferido em
+  20/11/2026). Por isso o forge **desliga** em vez de suspender, e o
+  Wake-on-LAN o liga a partir do S5. A rede é a RTL8168h onboard (`r8169`,
+  MAC `00:e0:4b:01:57:96`); "Wake Up via PCI-E" já está ativo na BIOS. Falta
+  conferir que a placa acorda do S5 (primeiro passo do plano; sem isso o
+  sub-projeto não segue).
+- Desligar em vez de suspender: cada volta é um boot completo (uns 40 a 60 s),
+  que a página "Aguarde" do Pi cobre. Hibernar (S4) foi descartado: grava até
+  12 GB no SSD a cada vez e exige resume pelo swapfile, mais frágil.
 - Não alterar IPs nem o MAC do server.
 
 ## Abordagens
@@ -79,7 +86,10 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
 
 - `server-sleep.nix` vira `host-sleep.nix` (opção `dionix.sleep`, mesmas
   subopções de hoje: `idleMinutes`, `ignoredPorts`, `blockers`, `wakeTimers`).
-  O server passa a usar `dionix.sleep` com os valores atuais (45 min, porta
+  Nova subopção `mode`: `"suspend"` (padrão, o server) ou `"poweroff"` (o
+  forge). Com `poweroff`, a placa precisa ficar armada para o Wake-on-LAN ao
+  desligar (`WakeOnLan=magic` no `.link` do systemd), e os `wakeTimers` não
+  se aplicam. O server passa a usar `dionix.sleep` com os valores atuais (45 min, porta
   9090 ignorada, mesmos bloqueadores e timers): comportamento idêntico.
 - O forge usa `dionix.sleep` com `idleMinutes = 20`, `ignoredPorts = [ 9100 ]`
   (o Prometheus do server raspa o node exporter) e `blockers` com o serviço de
@@ -184,11 +194,12 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
   entre 8h e 22h: se o `toplevel` do forge na `origin/main` difere do sistema
   configurado para o próximo boot, roda `nixos-rebuild boot` com ele (quase
   sempre já está no store, compilado pelo ciclo da seção 2).
-- O reboot não acontece na hora: quando a regra de sono decidiria suspender
-  (ninguém usando) e há sistema novo esperando, dentro das 8h–22h, o forge
-  **reinicia em vez de suspender**. Volta, cumpre a carência de 15 min e dorme
-  pelas regras normais. Ninguém é derrubado no meio do uso.
-- Fora do horário, o sistema novo espera; o forge suspende normalmente.
+- Não há reboot à parte: como o forge desliga para dormir, o sistema novo
+  entra no próximo boot, quando alguém ou o Pi o acordar. Ninguém é derrubado
+  no meio do uso.
+- O `nixos-rebuild boot` é barato (o sistema já está no store) e não liga a
+  ventoinha por muito tempo, então roda a qualquer hora em que o forge esteja
+  acordado; o horário das 8h–22h vale só para os builds da seção 2.
 - O `forge-update` também bloqueia o sono enquanto roda o `nixos-rebuild boot`.
 
 ## Arquivos (visão geral)
@@ -225,7 +236,7 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
 - O forge segue a `main` inteira, não só o `flake.lock`: qualquer mudança no
   forge que entra na `main` é aplicada sozinha. Um deploy manual de outra
   branch (`--target-host`) é substituído pela `main` no próximo ciclo.
-- O reboot acontece no lugar de uma suspensão, nunca com alguém usando.
+- O forge desliga (S5) em vez de suspender, porque a placa não tem S3; o sistema novo entra no boot seguinte.
 
 ## Fica para quem constrói
 
@@ -241,5 +252,5 @@ planejados (Forgejo, Vaultwarden, CI, cache) acordam o forge sob demanda.
 
 A primeira aplicação é feita pelo usuário (depois o forge se mantém sozinho): `nixos-rebuild switch` no Pi, no server e no notebook;
 no forge, `nixos-rebuild boot --target-host` + reboot (como no sub-projeto 1).
-Antes, à mão: ativar Wake-on-LAN na BIOS do forge, anotar o MAC da `enp2s0`,
-criar o token do GitHub em `/var/lib/secrets/github-token`.
+Antes, conferir que o forge liga pelo Wake-on-LAN a partir do S5 (desligado).
+Antes, à mão: criar o token do GitHub em `/var/lib/secrets/github-token`.
