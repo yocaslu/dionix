@@ -1,5 +1,7 @@
 # forge: o desktop vira servidor de desenvolvimento
 
+> Nota (2026-11-20): o forge agora dorme (desliga após 20 min sem uso e acorda por Wake-on-LAN), conforme o sub-projeto 2, `2026-11-20-forge-sono-design.md`. Onde esta spec diz "sempre ligado", leia "liga sob demanda", e os sub-projetos seguintes descem uma posição.
+
 Data: 2026-11-09
 
 Sub-projeto 1 de 5 do forge (decisões de 09/11/2026).
@@ -18,7 +20,7 @@ divisão do homelab fica:
 
 Os serviços do forge (sub-projetos 2 a 5: sops-nix; Forgejo e Vaultwarden; CI,
 Attic e deploy; ambiente de desenvolvimento remoto) moram numa máquina sempre
-ligada, sem depender do server acordar nem atrapalhar o `server-sleep`.
+ligada, sem depender do server acordar nem atrapalhar o `host-sleep`.
 
 Orçamento do SSD, que orienta os limites de disco deste sub-projeto:
 

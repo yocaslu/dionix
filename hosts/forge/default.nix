@@ -1,4 +1,5 @@
-# Servidor de desenvolvimento, sem interface gráfica e ligado 24/7.
+# Servidor de desenvolvimento, sem interface gráfica; desliga sozinho quando ninguém usa
+# e acorda por Wake-on-LAN (forge.nix).
 # Máquina: o antigo desktop (i5-3470, 12 GB de RAM e SSD de 240 GB).
 # Os serviços (Git, segredos, CI, cache e deploy) vêm nos próximos sub-projetos.
 { pkgs, ... }:

@@ -165,7 +165,7 @@ in
             (pct "tank" ''100 * zfs_pool_allocated_bytes{pool="tank"} / zfs_pool_size_bytes{pool="tank"}'')
             "x86_pkg_temp"
           )
-          # O server dorme quando ninguém o usa (server-sleep.nix); acessar um
+          # O server dorme quando ninguém o usa (host-sleep.nix); acessar um
           # serviço já o acorda, e este cartão serve para o SSH e o FTP do Switch
           {
             "Acordar o server" = {

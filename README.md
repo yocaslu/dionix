@@ -5,7 +5,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 | Host | Máquina | Papéis |
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
-| `forge` | Servidor de desenvolvimento headless, sempre ligado (antigo desktop: i5-3470, 12 GB, SSD de 240 GB, 10.42.1.3); Git, segredos, CI, cache e deploy nos próximos sub-projetos | base + builds (12 GB, limites de disco, emulação ARM) + node exporter |
+| `forge` | Servidor de desenvolvimento headless, que desliga sozinho e acorda por Wake-on-LAN (antigo desktop: i5-3470, 12 GB, SSD de 240 GB, 10.42.1.3); Git, segredos, CI e deploy nos próximos sub-projetos | base + builds (12 GB, limites de disco, emulação ARM) + node exporter + `host-sleep` + `forge-update` (atualizações) + `forge-cache` (cache binário) |
 | `server` | Servidor do homelab, direto no hardware (i7-4790, iGPU HD 4600, 10.42.1.22) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
 | `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + status (Gatus) + backup |
 
@@ -28,6 +28,11 @@ modules/nixos/
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
   forge.nix                Rede cabeada, builds em 12 GB, limites do SSD e emulação ARM (só no forge)
+  host-sleep.nix           Suspende (server) ou desliga (forge) quando ninguém usa
+  host-wake.nix            Pi: Wake-on-LAN por host, página "Aguarde" e /acordar
+  update-watch.nix         Pi: confere o canal do nixpkgs e acorda o forge
+  forge-update.nix         Forge: compila as atualizações, abre o PR e aplica a main
+  forge-cache.nix          Forge: store servido como cache binário (Harmonia)
   docker-host.nix          Docker, limpeza automática, oci-containers (sem uso: tudo é nativo)
   proxmox-vm.nix           agente QEMU, console serial, GRUB (sem uso: para VMs futuras)
   raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão

@@ -38,20 +38,20 @@ tailnet ──▶ Pi (rota da 10.42.1.0/24) ──▶ server
 
 O Pi anuncia a `10.42.1.0/24` (`dionix.tailscaleRouter.routes` em `hosts/pi/default.nix`): de fora, pela tailnet, tudo é alcançado por ele. Aprove a rota e o exit node no painel do Tailscale (*Machines → pi → Edit route settings*) e, em *DNS → Nameservers*, aponte o DNS global para o IP 100.x do Pi.
 
-## Sono do server
+## Sono do server e do forge
 
-O server suspende (S3) depois de 45 minutos sem uso e acorda sozinho no próximo acesso:
+O server suspende (S3) depois de 45 minutos sem uso; o forge desliga (S5, a placa-mãe dele não tem S3) depois de 20 minutos. Os dois acordam sozinhos no próximo acesso, por Wake-on-LAN:
 
-- **Acordar** (`modules/nixos/host-wake.nix`, no Pi): se o server não responde, o Nginx manda o pedido para o `host-wake`, que envia o Wake-on-LAN e mostra "Aguarde: o servidor está ligando". A página recarrega até o serviço voltar, em geral em poucos segundos. Apps (Nextcloud, DAVx5, Jellyfin) recebem 503 com `Retry-After` e também acordam a máquina. O SSH e o FTP do Switch não passam pelo Pi: use o cartão *Acordar o server* da página inicial (`https://home.vault76.com.br/acordar`).
-- **Dormir** (`modules/nixos/server-sleep.nix`, no server): a cada 5 minutos, o `server-sleep` suspende se não houve acesso real pelo proxy (o Gatus e a página inicial não contam), não há conexões abertas nos serviços (vídeo, apps com websocket, SSH, FTP), nada de backup, dump, scrub ou deploy rodando, e o Wake-on-LAN está armado. O dump do banco (02:30), o backup (03:00) e o scrub mensal acordam a máquina no horário.
-- **Enquanto dorme**: o Gatus mostra os serviços do server como no ar (o Pi responde "dormindo"), mas as checagens TCP de SSH e FTP ficam vermelhas. As estatísticas do server somem da página inicial, o Prometheus não coleta (gráficos com buracos), o qBittorrent para de semear e a suíte Arr só busca lançamentos com a máquina ligada.
+- **Acordar** (`modules/nixos/host-wake.nix`, no Pi): se o host não responde, o Nginx manda o pedido para o `host-wake`, que envia o Wake-on-LAN e mostra "Aguarde: o servidor está ligando". A página recarrega até o serviço voltar (poucos segundos no server, uns 40 a 60 s no forge, que faz um boot completo). Apps (Nextcloud, DAVx5, Jellyfin) recebem 503 com `Retry-After` e também acordam a máquina. O SSH e o FTP do Switch não passam pelo Pi: use o cartão *Acordar o server* da página inicial (`https://home.vault76.com.br/acordar`); o forge acorda em `https://home.vault76.com.br/acordar/forge`.
+- **Dormir** (`modules/nixos/host-sleep.nix`, no server e no forge): a cada 5 minutos, o `host-sleep` suspende (server) ou desliga (forge) se não houve acesso real pelo proxy (o Gatus e a página inicial não contam), não há conexões abertas nos serviços (vídeo, apps com websocket, SSH, FTP), nada de backup, dump, scrub, build ou deploy rodando, e o Wake-on-LAN está armado. No server, o dump do banco (02:30), o backup (03:00) e o scrub mensal acordam a máquina no horário.
+- **Enquanto dormem**: o Gatus mostra os serviços do server como no ar (o Pi responde "dormindo"), mas as checagens TCP de SSH e FTP ficam vermelhas. As estatísticas do server somem da página inicial, o Prometheus não coleta (gráficos com buracos), o qBittorrent para de semear e a suíte Arr só busca lançamentos com a máquina ligada.
 
 ```sh
-journalctl -u server-sleep -n 20      # no server: por que suspendeu ou não
+journalctl -u host-sleep -n 20      # no server ou no forge: por que dormiu ou não
 journalctl -u host-wake -n 20       # no Pi
 ```
 
-Para desligar o recurso, `dionix.serverSleep.enable = false` em `hosts/server/default.nix`; o tempo fica em `dionix.serverSleep.idleMinutes`.
+Para desligar o recurso, `dionix.sleep.enable = false` no host (`hosts/server/default.nix`, ou em `modules/nixos/forge.nix` para o forge); o tempo fica em `dionix.sleep.idleMinutes`.
 
 ## Forge (antigo desktop)
 
@@ -73,6 +73,22 @@ Converter o antigo desktop (a reserva de `10.42.1.3` já existe):
 O forge não aceita as rotas da tailnet (`--accept-routes=false`, como o Pi): a rede de casa que o Pi anuncia faria as respostas para a `10.42.1.0/24` saírem pelo Tailscale, e o forge sumiria da rede. Se ele ainda estiver sem a config nova, `sudo tailscale set --accept-routes=false` no console resolve na hora.
 
 O `boot` só troca o sistema no próximo boot. Se a rede não subir (o antigo desktop usava NetworkManager), a geração anterior continua no menu do systemd-boot, mas para escolhê-la é preciso monitor e teclado.
+
+### Sono, atualizações e cache do forge
+
+O forge desliga sozinho (ver acima) e só liga quando alguém o usa ou quando há atualização para compilar:
+
+- **Atualização** (`modules/nixos/update-watch.nix` no Pi, `modules/nixos/forge-update.nix` no forge): o Pi confere o canal `nixos-26.05` todo dia às 10h. Se ele andou, marca "pendente" e acorda o forge. O `forge-update` roda 1 minuto depois do boot e a cada 15 minutos, só entre 8h e 22h: atualiza o `flake.lock` na branch `atualizacao/flake-lock`, compila `notebook`, `forge`, `server` e `pi`, abre (ou atualiza) o PR no GitHub e, quando a `main` muda, aplica a `main` em si mesmo com `nixos-rebuild boot`. O estado aparece em `https://pi.vault76.com.br/forge/estado` e no módulo `upd` da Waybar do notebook. Uma revisão que falhou só é tentada de novo quando o canal anda ou pelo clique no widget.
+- **O forge segue a `main` sozinho**: um deploy manual com `--target-host` a partir de outra branch é substituído no próximo ciclo.
+- **Cache** (`modules/nixos/forge-cache.nix`): o store do forge é servido por Harmonia em `https://cache.vault76.com.br`. Com o forge desligado, o Pi responde 404 na hora (o notebook segue para o cache oficial, sem acordar nada). O notebook só passa a usar esse cache depois que `cachePublicKey` é preenchida.
+- **Logs**: `journalctl -u forge-update` (forge), `journalctl -u update-watch` e `journalctl -u update-watch-conferir` (Pi).
+
+Passos manuais:
+
+1. No forge, antes do primeiro boot com a config nova, crie `/var/lib/secrets/github-token`: token fine-grained, só no repositório `yocaslu/dionix`, com permissões *Contents* e *Pull requests* (leitura e escrita).
+2. Depois do primeiro boot do forge, copie `/var/lib/secrets/cache-key.pub` para `cachePublicKey` em `modules/nixos/homelab.nix` (commit pequeno) e aplique o notebook.
+3. Ordem de aplicação: **Pi antes do server** (o server passa a chamar `/sono/server/…`, que só o Pi novo atende); depois forge, server e notebook. O diretório de estado do Pi mudou de `server-wake` para `host-wake`, então a marca "dormindo" do server se perde nesse deploy: o Gatus pode mostrar os serviços do server fora do ar por pouco tempo, até ele acordar ou dormir de novo.
+4. Confira o cache com o forge desligado: `curl -s -o /dev/null -w '%{http_code} %{time_total}' https://cache.vault76.com.br/nix-cache-info` deve dar `404` em menos de 3 s, e o forge continua desligado.
 
 ## 1. Rede
 
