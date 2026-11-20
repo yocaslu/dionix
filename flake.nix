@@ -122,6 +122,11 @@
             python3 ${./modules/nixos/files/update-watch-test.py} ${./modules/nixos/files/update-watch.py}
             touch $out
           '';
+          # Testes do forge-update (forge): atualização, PR e aplicação da main
+          forge-update = pkgs.runCommand "forge-update-test" { nativeBuildInputs = [ pkgs.jq ]; } ''
+            bash ${./modules/nixos/files/forge-update-test.sh} ${./modules/nixos/files/forge-update.sh}
+            touch $out
+          '';
         };
     };
 }
