@@ -23,7 +23,7 @@ setup() {
   fake_command curl 'echo "curl $*" >> "$CALLS"
 case "$*" in *forge/pendente*) printf "%s" "${PENDENTE:-}" ;; esac'
   fake_command git 'echo "git $*" >> "$CALLS"'
-  fake_command nvd 'echo "nvd $*" >> "$CALLS"; echo "resumo de $3"'
+  fake_command nvd 'echo "nvd $*" >> "$CALLS"; [ -z "${FALHA_NVD:-}" ] || exit 1; echo "resumo de $3"'
   fake_command nixos-rebuild 'echo "nixos-rebuild $*" >> "$CALLS"'
   fake_command nix 'echo "nix $*" >> "$CALLS"
 case "$*" in
@@ -38,7 +38,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 host=${attr#*nixosConfigurations.}; host=${host%%.*}
-if [ -n "${FALHA_HOST:-}" ] && [ "$host" = "$FALHA_HOST" ] && grep -q "^nix flake update" "$CALLS"; then
+if [ -n "${FALHA_HOST:-}" ] && [ "$host" = "$FALHA_HOST" ] && { [ -n "${FALHA_ANTES:-}" ] || grep -q "^nix flake update" "$CALLS"; }; then
   exit 1
 fi
 [ -z "$out" ] || ln -sfn "/nix/store/fake-$host" "$out"
@@ -113,6 +113,16 @@ setup
 HORA=10 PENDENTE=B FALHA_HOST=pi run
 check "falha avisa e não abre PR" '[ $status != 0 ] && called "forge/falhou" && ! called "push" && ! called "pr " && ! called "forge/pronto"'
 check "falhou leva a revisão" 'grep "forge/falhou" "$root/calls" | grep -q "B"'
+
+# nvd falha (dentro de $(...)): um único falhou, sem push, PR nem pronto
+setup
+HORA=10 PENDENTE=B FALHA_NVD=1 run
+check "falha do nvd avisa uma vez" '[ $status != 0 ] && [ "$(grep -c forge/falhou "$root/calls")" = 1 ] && ! called "push" && ! called "pr " && ! called "forge/pronto"'
+
+# Build dentro de $(...) falha antes do flake update: também um único falhou
+setup
+HORA=10 PENDENTE=B FALHA_ANTES=1 FALHA_HOST=notebook run
+check "falha de build em \$(...) avisa uma vez" '[ $status != 0 ] && [ "$(grep -c forge/falhou "$root/calls")" = 1 ] && ! called "push" && ! called "forge/pronto"'
 
 # A main aplicada só quando difere do perfil
 setup

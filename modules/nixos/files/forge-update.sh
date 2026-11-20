@@ -32,7 +32,7 @@ carregar_token() {
   GH_REPO=${GH_REPO%.git}
   export GH_TOKEN GH_REPO
   GIT_CONFIG_COUNT=1
-  GIT_CONFIG_KEY_0=http.extraHeader
+  GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader
   GIT_CONFIG_VALUE_0="Authorization: Basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
   export GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
 }
@@ -72,7 +72,10 @@ aplicar_main() {
   fi
 }
 
+# O ERR também dispara dentro de $(...): lá só sai, e o shell principal, ao ver
+# a substituição falhar, chama esta função (assim há um único aviso)
 falhou() {
+  [ "$BASHPID" = "$$" ] || exit 1
   trap - ERR
   echo "compilar: falhou, o PR não foi tocado" >&2
   pi_enviar falhou "$1" || true
@@ -80,7 +83,7 @@ falhou() {
 }
 
 compilar() {
-  local rev=$1 host corpo url pr pronto
+  local rev=$1 host corpo url pr pronto diff
   declare -A antigo novo
   pi_enviar compilando "$rev"
   trap 'falhou "$rev"' ERR
@@ -106,7 +109,8 @@ compilar() {
   {
     echo "Atualização do \`flake.lock\` compilada pelo forge (todos os hosts e \`nix flake check\` passaram)."
     for host in $HOSTS; do
-      printf '\n## %s\n\n%s\n%s\n%s\n' "$host" '```' "$(nvd diff "${antigo[$host]}" "${novo[$host]}")" '```'
+      diff=$(nvd diff "${antigo[$host]}" "${novo[$host]}")
+      printf '\n## %s\n\n%s\n%s\n%s\n' "$host" '```' "$diff" '```'
     done
   } > "$corpo"
 
@@ -131,8 +135,9 @@ compilar() {
   done
   command rm -f "$GCROOTS"/main-* "$corpo"
 
+  diff=$(nvd diff "${antigo[notebook]}" "${novo[notebook]}")
   pronto=$(jq -nc --arg rev "$rev" --argjson pr "$pr" --arg url "$url" \
-    --arg resumo "$(nvd diff "${antigo[notebook]}" "${novo[notebook]}")" \
+    --arg resumo "$diff" \
     '{rev: $rev, pr: $pr, url: $url, resumo: $resumo}')
   trap - ERR
   pi_enviar pronto "$pronto" application/json

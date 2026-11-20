@@ -32,7 +32,9 @@ in
 
   systemd.services.forge-update = {
     description = "Compila as atualizações, abre o PR e aplica a main no forge";
-    wantedBy = [ "multi-user.target" ];
+    # Quem dispara é o timer (logo depois do boot): um `nixos-rebuild switch`
+    # não reinicia nem espera um build que pode levar horas
+    restartIfChanged = false;
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     environment = {
@@ -56,7 +58,7 @@ in
   systemd.timers.forge-update = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnBootSec = "15min";
+      OnBootSec = "1min";
       OnUnitActiveSec = "15min";
     };
   };
