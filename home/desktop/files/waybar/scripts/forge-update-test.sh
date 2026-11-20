@@ -23,17 +23,19 @@ cat > "$root/bin/gh" << 'EOF2'
 #!/bin/sh
 echo "gh $*" >> "$CALLS"
 case "$1 $2" in
-  "pr view") printf '{"mergeStateStatus": "%s", "baseRefOid": "abc"}\n' "$MERGE" ;;
+  "pr view") [ -z "${GH_FALHA:-}" ] || exit 1; printf '%s\n' "$MERGE" ;;
 esac
 EOF2
-for cmd in git nh pkill sleep; do
+# sleep curto de verdade, para o limite de espera do cache valer
+printf '#!/bin/sh\necho "sleep $*" >> "$CALLS"\n%s 0.2\n' "$(command -v sleep)" > "$root/bin/sleep"
+for cmd in git nh pkill; do
   printf '#!/bin/sh\necho "%s $*" >> "$CALLS"\n' "$cmd" > "$root/bin/$cmd"
 done
 chmod +x "$root/bin/"*
 
 run() {
   : > "$root/calls"
-  CALLS=$root/calls DIONIX_DOMAIN=exemplo.test NH_FLAKE=/flake PATH=$root/bin:$PATH \
+  CALLS=$root/calls ESPERA_CACHE=${ESPERA_CACHE:-180} DIONIX_DOMAIN=exemplo.test NH_FLAKE=/flake PATH=$root/bin:$PATH \
     bash "$script" "$@" > "$root/output" 2>&1 << EOF2
 ${RESPOSTA:-}
 
@@ -99,15 +101,23 @@ MERGE=UNKNOWN RESPOSTA=s run --aplicar
 check "UNKNOWN: não mescla nem tenta" '! calls_have "gh pr merge" && ! calls_have "forge/tentar"'
 check "UNKNOWN: avisa" 'grep -q "instantes" "$root/output"'
 
-for m in CLEAN UNSTABLE BLOCKED; do
+for m in BLOCKED "" ; do
+  MERGE=$m RESPOSTA=s run --aplicar
+  check "'$m': falha fechada (não acorda nem mescla)" '! calls_have "/acordar/forge" && ! calls_have "gh pr merge" && ! calls_have "nh os switch"'
+done
+
+GH_FALHA=1 MERGE=CLEAN RESPOSTA=s run --aplicar
+check "gh pr view falhando: não acorda nem mescla" '! calls_have "/acordar/forge" && ! calls_have "gh pr merge" && ! calls_have "forge/tentar" && grep -q "Não consegui consultar" "$root/output"'
+
+for m in CLEAN UNSTABLE HAS_HOOKS; do
   MERGE=$m RESPOSTA=s run --aplicar
   check "$m: acorda o forge" 'calls_have "/acordar/forge"'
-  check "$m: mescla" 'calls_have "gh pr merge 30 --squash --delete-branch"'
+  check "$m: consulta e mescla com -R" 'calls_have "gh pr view 30 -R yocaslu/dionix" && calls_have "gh pr merge 30 -R yocaslu/dionix --squash --delete-branch"'
   check "$m: atualiza e aplica" 'calls_have "git -C /flake pull --ff-only" && calls_have "nh os switch /flake"'
 done
 
-MERGE=CLEAN CACHE_FORA=1 RESPOSTA=s run --aplicar
-check "cache fora: não mescla" '! calls_have "gh pr merge" && grep -q "3 minutos" "$root/output"'
+ESPERA_CACHE=1 MERGE=CLEAN CACHE_FORA=1 RESPOSTA=s run --aplicar
+check "cache fora: não mescla, avisa o tempo real" '! calls_have "gh pr merge" && grep -q "não respondeu em 1 segundos" "$root/output"'
 unset CACHE_FORA
 
 [ "$failures" -eq 0 ] && echo "forge-update: tudo certo"

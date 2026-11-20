@@ -8,6 +8,10 @@
 
 domain="${DIONIX_DOMAIN:?defina DIONIX_DOMAIN}"
 flake="${NH_FLAKE:-$HOME/repos/dionix}"
+# O gh roda de qualquer pasta (a Waybar abre o terminal no $HOME)
+repo="yocaslu/dionix"
+# Quanto esperar o cache do forge ligar, em segundos
+espera="${ESPERA_CACHE:-180}"
 pi="https://pi.$domain"
 cache="https://cache.$domain/nix-cache-info"
 acordar="https://home.$domain/acordar/forge"
@@ -42,11 +46,12 @@ tentar() {
   curl -fsS --max-time 10 -X POST "$pi/forge/tentar" > /dev/null
 }
 
-# Acorda o forge e espera o cache binário responder (até 3 minutos)
+# Acorda o forge e espera o cache binário responder (até $espera segundos,
+# medidos pelo relógio)
 esperar_cache() {
-  local i
+  local fim=$((SECONDS + espera))
   curl -fsS --max-time 10 "$acordar" > /dev/null 2>&1
-  for ((i = 0; i < 36; i++)); do
+  while ((SECONDS < fim)); do
     curl -fs --max-time 5 -o /dev/null "$cache" 2> /dev/null && return 0
     sleep 5
   done
@@ -82,25 +87,30 @@ aplicar() {
   read -r resposta
   [ "$resposta" = s ] || return 0
 
-  merge=$(gh pr view "$pr" --json mergeStateStatus,baseRefOid | jq -r '.mergeStateStatus')
+  # Falha fechada: sem resposta clara do GitHub, nem acorda o forge nem mescla
+  if ! merge=$(gh pr view "$pr" -R "$repo" --json mergeStateStatus -q .mergeStateStatus); then
+    echo "Não consegui consultar o PR no GitHub. Tente de novo em instantes."
+    return 1
+  fi
   case "$merge" in
+    CLEAN | UNSTABLE | HAS_HOOKS) ;;
     BEHIND | DIRTY)
       tentar
       echo "A main andou: pedi ao forge para compilar de novo. Tente quando o módulo voltar a mostrar o PR."
       return
       ;;
-    UNKNOWN)
-      echo "O GitHub ainda calcula o estado do PR. Tente de novo em instantes."
+    *)
+      echo "Estado do PR: ${merge:-desconhecido}. Tente de novo em instantes."
       return
       ;;
   esac
 
   echo "Acordando o forge e esperando o cache..."
   if ! esperar_cache; then
-    echo "O cache do forge não respondeu em 3 minutos."
+    echo "O cache do forge não respondeu em $espera segundos."
     return 1
   fi
-  gh pr merge "$pr" --squash --delete-branch || return
+  gh pr merge "$pr" -R "$repo" --squash --delete-branch || return
   git -C "$flake" pull --ff-only || return
   nh os switch "$flake"
 }
