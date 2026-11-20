@@ -1,7 +1,7 @@
 # Só no forge: rede cabeada, builds dentro de 12 GB de RAM, o store do Nix
 # contido no seu pedaço do SSD de 240 GB e o desligamento quando ninguém usa
 # (a placa não tem S3; o Pi liga por Wake-on-LAN).
-{ ... }:
+{ config, ... }:
 {
   imports = [
     ./homelab.nix
@@ -21,6 +21,10 @@
       IPv6AcceptRA = true;
     };
     linkConfig.RequiredForOnline = "routable";
+    # O DNS é o Technitium do Pi (como no server): o sono e as atualizações
+    # chamam pi.<domínio> e não dependem do DNS do roteador
+    dhcpV4Config.UseDNS = false;
+    dns = [ config.dionix.homelab.pi ];
   };
 
   # Wake-on-LAN permanente, para o Pi ligar o forge depois do desligamento
