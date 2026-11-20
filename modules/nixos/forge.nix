@@ -1,8 +1,12 @@
-# Só no forge: rede cabeada, builds dentro de 12 GB de RAM e o store do Nix
-# contido no seu pedaço do SSD de 240 GB.
+# Só no forge: rede cabeada, builds dentro de 12 GB de RAM, o store do Nix
+# contido no seu pedaço do SSD de 240 GB e o desligamento quando ninguém usa
+# (a placa não tem S3; o Pi liga por Wake-on-LAN).
 { ... }:
 {
-  imports = [ ./homelab.nix ];
+  imports = [
+    ./homelab.nix
+    ./host-sleep.nix
+  ];
 
   # Rede: qualquer porta Ethernet, por DHCP; o 10.42.1.3 vem da reserva no
   # roteador. Cópia da do hosts/server/base.nix, em vez de um módulo comum,
@@ -15,6 +19,33 @@
       IPv6AcceptRA = true;
     };
     linkConfig.RequiredForOnline = "routable";
+  };
+
+  # Wake-on-LAN permanente, para o Pi ligar o forge depois do desligamento
+  # (host-wake.nix). Igual ao do hosts/server/base.nix: mantém a política
+  # padrão de nomes, que um .link próprio substituiria.
+  systemd.network.links."10-wake-on-lan" = {
+    matchConfig.Type = "ether";
+    linkConfig = {
+      NamePolicy = "keep kernel database onboard slot path";
+      AlternativeNamesPolicy = "database onboard slot path";
+      MACAddressPolicy = "persistent";
+      WakeOnLan = "magic";
+    };
+  };
+
+  # Desliga (S5) após 20 min sem uso. O forge-update (atualizações) e um
+  # nixos-rebuild em andamento o seguram acordado.
+  dionix.sleep = {
+    enable = true;
+    mode = "poweroff";
+    idleMinutes = 20;
+    # O node exporter é consultado pelo Prometheus do server
+    ignoredPorts = [ 9100 ];
+    blockers = [
+      "forge-update.service"
+      "nixos-rebuild-switch-to-configuration.service"
+    ];
   };
 
   # O forge fica na rede de casa, que o Pi anuncia para a tailnet: aceitando essa
