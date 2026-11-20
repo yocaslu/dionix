@@ -1,4 +1,4 @@
-# Só no forge: rede cabeada, builds dentro de 8 GB de RAM e o store do Nix
+# Só no forge: rede cabeada, builds dentro de 12 GB de RAM e o store do Nix
 # contido no seu pedaço do SSD de 240 GB.
 { ... }:
 {
@@ -24,9 +24,10 @@
 
   nix = {
     settings = {
-      # Um build por vez, com os 4 núcleos: vários compiladores juntos estouram a RAM
-      max-jobs = 1;
-      cores = 4;
+      # Dois builds por vez, com 2 núcleos cada (os 4 do i5-3470 sem sobrar
+      # compilador na fila): os 12 GB de RAM aguentam dois, mais estourariam
+      max-jobs = 2;
+      cores = 2;
       # Com menos de 10 GiB livres durante um build, o Nix coleta lixo até
       # sobrarem 30 GiB (o nh clean do common.nix continua limpando por idade)
       min-free = 10 * 1024 * 1024 * 1024;
