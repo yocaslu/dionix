@@ -1,5 +1,5 @@
-# Acorda hosts (server, forge) por Wake-on-LAN e responde no lugar deles enquanto
-# ligam. O Nginx do Pi manda para cá os pedidos que o host não atendeu
+# Acorda hosts (server, forge) por Wake-on-LAN e responde no lugar deles
+# enquanto ligam. O Nginx do Pi manda para cá os pedidos que o host não atendeu
 # (502/504), com X-Dionix-Host (qual host) e X-Dionix-Uso: 1 para acessos reais
 # ou 0 para as checagens do próprio Pi.
 # Configuração por variáveis de ambiente (host-wake.nix).
@@ -140,8 +140,9 @@ class Pedido(BaseHTTPRequestHandler):
             if host not in HOSTS:
                 return self.responder(404, "host desconhecido\n")
             if acao == "uso" and self.command in ("GET", "HEAD"):
+                log = os.path.join(LOG_DIR, f"uso-{host}.log")
                 try:
-                    ultimo = int(os.stat(os.path.join(LOG_DIR, f"uso-{host}.log")).st_mtime)
+                    ultimo = int(os.stat(log).st_mtime)
                 except FileNotFoundError:
                     ultimo = 0
                 return self.responder(200, f"{ultimo}\n")
