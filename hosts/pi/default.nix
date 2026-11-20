@@ -26,6 +26,7 @@ in
     ../../modules/nixos/status.nix
     ../../modules/nixos/homepage.nix
     ../../modules/nixos/host-wake.nix
+    ../../modules/nixos/update-watch.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];

@@ -117,6 +117,11 @@
             python3 ${./modules/nixos/files/host-wake-test.py} ${./modules/nixos/files/host-wake.py}
             touch $out
           '';
+          # Testes do update-watch (Pi): conferência do canal e estado das atualizações
+          update-watch = pkgs.runCommand "update-watch-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./modules/nixos/files/update-watch-test.py} ${./modules/nixos/files/update-watch.py}
+            touch $out
+          '';
         };
     };
 }
