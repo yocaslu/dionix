@@ -22,11 +22,14 @@ setup() {
   fake_command date 'echo "${HORA:-10}"'
   fake_command curl 'echo "curl $*" >> "$CALLS"
 case "$*" in *forge/pendente*) printf "%s" "${PENDENTE:-}" ;; esac'
-  fake_command git 'echo "git $*" >> "$CALLS"'
+  # git diff --quiet: sai 1 (lock mudou) salvo com LOCK_IGUAL
+  fake_command git 'echo "git $*" >> "$CALLS"
+case "$*" in "diff --quiet"*) [ -n "${LOCK_IGUAL:-}" ] || exit 1 ;; esac'
   fake_command nvd 'echo "nvd $*" >> "$CALLS"; [ -z "${FALHA_NVD:-}" ] || exit 1; echo "resumo de $3"'
   fake_command nixos-rebuild 'echo "nixos-rebuild $*" >> "$CALLS"'
   fake_command nix 'echo "nix $*" >> "$CALLS"
 case "$*" in
+  "flake update"*) [ -z "${TERMINA:-}" ] || kill -TERM "$PPID"; exit 0 ;;
   "flake "*) exit 0 ;;
 esac
 out= ; attr=
@@ -45,6 +48,7 @@ fi
 echo "/nix/store/fake-$host"'
   fake_command gh 'echo "gh $*" >> "$CALLS"
 case "$*" in
+  "pr list"*"--jq"*) echo "${PR_ABERTO:-}" ;;
   "pr list"*) echo "${PR_LISTA:-[]}" ;;
   "pr create"*) echo https://github.com/yocaslu/dionix/pull/31 ;;
 esac'
@@ -123,6 +127,29 @@ check "falha do nvd avisa uma vez" '[ $status != 0 ] && [ "$(grep -c forge/falho
 setup
 HORA=10 PENDENTE=B FALHA_ANTES=1 FALHA_HOST=notebook run
 check "falha de build em \$(...) avisa uma vez" '[ $status != 0 ] && [ "$(grep -c forge/falhou "$root/calls")" = 1 ] && ! called "push" && ! called "forge/pronto"'
+
+# TERM durante a compilação (timeout do systemd): um único falhou
+setup
+HORA=10 PENDENTE=B TERMINA=1 run
+check "TERM avisa falhou uma vez" '[ $status != 0 ] && [ "$(grep -c forge/falhou "$root/calls")" = 1 ] && ! called "push" && ! called "forge/pronto"'
+
+# O Pi recebe os avisos com tentativas
+setup
+HORA=10 PENDENTE=B run
+check "avisos ao Pi com retry" 'grep "forge/compilando" "$root/calls" | grep -q -- "--retry 3 --retry-all-errors" && grep "forge/pronto" "$root/calls" | grep -q -- "--retry 3 --retry-all-errors"'
+
+# flake.lock igual: main já tem o canal; fecha o PR aberto e avisa em-dia
+setup
+HORA=10 PENDENTE=B LOCK_IGUAL=1 PR_ABERTO=30 run
+check "lock igual: em-dia, fecha o PR" '[ $status = 0 ] && em_ordem "forge/compilando" "flake update" "pr close 30 --delete-branch" "forge/em-dia"'
+check "lock igual: nada de push, PR novo, pronto ou falhou" '! called "push" && ! called "pr create" && ! called "pr edit" && ! called "forge/pronto" && ! called "forge/falhou" && ! called "flake check"'
+check "lock igual: não compila os hosts novos" '! called "--out-link $root/gc/novo"'
+check "lock igual: em-dia leva a revisão" 'grep "forge/em-dia" "$root/calls" | grep -q " B "'
+
+# Lock igual sem PR aberto: só avisa
+setup
+HORA=10 PENDENTE=B LOCK_IGUAL=1 run
+check "lock igual sem PR: em-dia sem close" '[ $status = 0 ] && ! called "pr close" && called "forge/em-dia"'
 
 # A main aplicada só quando difere do perfil
 setup

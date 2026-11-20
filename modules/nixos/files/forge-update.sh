@@ -38,7 +38,9 @@ carregar_token() {
 }
 
 pi_enviar() { # caminho, corpo, [tipo]
-  curl -fsS -X POST -H "Content-Type: ${3:-text/plain}" --data "$2" "$PI_URL/forge/$1" > /dev/null
+  # Tenta de novo: se o aviso se perde, o Pi fica com um estado velho
+  curl -fsS --retry 3 --retry-all-errors --max-time 20 -X POST \
+    -H "Content-Type: ${3:-text/plain}" --data "$2" "$PI_URL/forge/$1" > /dev/null
 }
 
 # Clone próprio, parado na origin/main
@@ -82,11 +84,26 @@ falhou() {
   exit 1
 }
 
+# A main já tem o nixpkgs do canal (o flake.lock não mudou): fecha o PR aberto,
+# solta as raízes de GC e avisa o Pi, sem marcar falha nem empurrar nada
+em_dia() {
+  local rev=$1 aberto
+  aberto=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+  if [ -n "$aberto" ]; then
+    gh pr close "$aberto" --delete-branch \
+      --comment "A main já tem o nixpkgs do canal: o PR deixou de ser necessário."
+  fi
+  command rm -f "$GCROOTS"/*
+  trap - ERR TERM INT
+  pi_enviar em-dia "$rev"
+}
+
 compilar() {
   local rev=$1 host corpo url pr pronto diff
   declare -A antigo novo
   pi_enviar compilando "$rev"
-  trap 'falhou "$rev"' ERR
+  # TERM/INT (timeout do systemd, systemctl stop) também avisam o Pi
+  trap 'falhou "$rev"' ERR TERM INT
 
   carregar_token
   mkdir -p "$GCROOTS"
@@ -101,6 +118,10 @@ compilar() {
   done
 
   nix flake update
+  if git diff --quiet -- flake.lock; then
+    em_dia "$rev"
+    return
+  fi
   for host in $HOSTS; do
     novo[$host]=$(nix build --out-link "$GCROOTS/novo-$host" --print-out-paths "$(toplevel "$host")")
   done
@@ -139,7 +160,7 @@ compilar() {
   pronto=$(jq -nc --arg rev "$rev" --argjson pr "$pr" --arg url "$url" \
     --arg resumo "$diff" \
     '{rev: $rev, pr: $pr, url: $url, resumo: $resumo}')
-  trap - ERR
+  trap - ERR TERM INT
   pi_enviar pronto "$pronto" application/json
 }
 

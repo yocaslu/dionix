@@ -2,7 +2,8 @@
 # (`update-watch --conferir`) compara a revisão do canal nixos-26.05 com a da
 # `main` e marca "pendente" quando há novidade; o forge consulta, compila,
 # abre o PR e avisa por aqui. O widget do notebook lê /forge/estado.
-# Estados: nada, pendente, compilando, pronto, falhou.
+# Estados: nada, pendente, compilando, pronto, falhou. Um `compilando` sem
+# resposta do forge por mais de LIMITE_COMPILANDO vira `falhou`.
 # Configuração por variáveis de ambiente (update-watch.nix).
 import contextlib
 import fcntl
@@ -21,6 +22,7 @@ URL_LOCK = "https://raw.githubusercontent.com/yocaslu/dionix/main/flake.lock"
 URL_PR = "https://api.github.com/repos/yocaslu/dionix/pulls/{}"
 URL_ACORDAR = "http://127.0.0.1:8090/acordar/forge"
 CACHE_PR = 600  # segundos entre duas consultas do mesmo PR
+LIMITE_COMPILANDO = 6 * 3600  # igual ao TimeoutStartSec do forge-update
 
 VAZIO = {
     "estado": "nada",
@@ -30,6 +32,7 @@ VAZIO = {
     "url": None,
     "resumo": "",
     "conferido": 0,
+    "desde": 0,  # quando entrou em `compilando`
 }
 # Campos que o widget enxerga
 PUBLICOS = ("estado", "rev", "pr", "url", "resumo")
@@ -102,7 +105,10 @@ def sem_pr(e):
 
 
 def vigente(e):
-    """PR fechado ou mesclado: o estado volta a nada."""
+    """PR fechado ou mesclado: o estado volta a nada; compilando órfão: falhou."""
+    if e["estado"] == "compilando" and time.time() - e["desde"] > LIMITE_COMPILANDO:
+        e = {**e, "estado": "falhou"}
+        gravar(e)
     if e["estado"] == "pronto" and e["pr"] is not None and not pr_aberto(e["pr"]):
         e = sem_pr(e)
         gravar(e)
@@ -171,6 +177,11 @@ class Pedido(BaseHTTPRequestHandler):
             if acao in ("compilando", "falhou"):
                 rev = corpo.strip()
                 e = {**sem_pr(e), "estado": acao, "rev": rev, "tentada": rev}
+                if acao == "compilando":
+                    e["desde"] = int(time.time())
+            elif acao == "em-dia":
+                # A main já tem o nixpkgs do canal: nada a compilar nem a repetir
+                e = {**sem_pr(e), "tentada": corpo.strip()}
             elif acao == "pronto":
                 try:
                     p = json.loads(corpo)

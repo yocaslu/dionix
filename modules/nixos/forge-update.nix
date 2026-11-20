@@ -48,6 +48,9 @@ in
     };
     serviceConfig = {
       Type = "oneshot";
+      # Um build preso não segura o forge ligado: o TERM do timeout dispara o
+      # aviso `falhou` ao Pi (trap do script)
+      TimeoutStartSec = "6h";
       # Root: o nixos-rebuild boot e as raízes de GC em /nix/var/nix/gcroots
       ExecStart = lib.getExe programa;
       StateDirectory = "forge-update";

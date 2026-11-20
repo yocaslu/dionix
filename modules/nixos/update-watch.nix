@@ -7,7 +7,7 @@
 #   GET  /forge/estado       estado para o widget do notebook (livre)
 #   POST /forge/tentar       regrava "pendente" e acorda o forge (livre)
 #   GET  /forge/pendente     só o forge: revisão a compilar (204 se não há)
-#   POST /forge/{compilando,pronto,falhou}   só o forge
+#   POST /forge/{compilando,pronto,falhou,em-dia}   só o forge
 {
   config,
   lib,

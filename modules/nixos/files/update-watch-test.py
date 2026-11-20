@@ -137,6 +137,37 @@ class Endpoints(Base):
         self.assertEqual(self.estado()["estado"], "compilando")
         self.assertEqual(uw.ler()["tentada"], "B")
 
+    def test_compilando_orfao_vira_falhou(self):
+        chamar("/forge/compilando", "POST", "B")
+        self.assertEqual(self.estado()["estado"], "compilando")
+        e = uw.ler()
+        uw.gravar({**e, "desde": e["desde"] - uw.LIMITE_COMPILANDO - 1})
+        r = self.estado()
+        self.assertEqual((r["estado"], r["rev"]), ("falhou", "B"))
+        self.assertEqual(uw.ler()["tentada"], "B")
+        # conferir não repete a revisão que ficou órfã
+        uw.conferir()
+        self.assertEqual(self.estado()["estado"], "falhou")
+        self.assertEqual(self.acordou, 0)
+
+    def test_compilando_recente_continua(self):
+        chamar("/forge/compilando", "POST", "B")
+        uw.conferir()
+        self.assertEqual(self.estado()["estado"], "compilando")
+
+    def test_em_dia_volta_a_nada_sem_pendente(self):
+        chamar("/forge/compilando", "POST", "B")
+        self.assertEqual(chamar("/forge/em-dia", "POST", "B\n").status, 200)
+        self.assertEqual(self.estado()["estado"], "nada")
+        self.assertEqual(uw.ler()["tentada"], "B")
+        uw.conferir()
+        self.assertEqual(self.estado()["estado"], "nada")
+        self.assertEqual(self.acordou, 0)
+        # canal novo depois volta a ser pendente
+        self.canal = "C"
+        uw.conferir()
+        self.assertEqual(self.estado()["estado"], "pendente")
+
 
 if __name__ == "__main__":
     unittest.main()
