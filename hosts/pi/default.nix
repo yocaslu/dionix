@@ -43,8 +43,18 @@ in
     };
   };
 
-  # O cache do forge responde 404 com ele desligado, sem acordá-lo
+  # O cache do forge responde 404 com ele desligado, sem acordá-lo (o upstream
+  # `forge-cache` já não casa com o IP do host; fica como documentação)
   dionix.wake.ignore = [ "cache" ];
+
+  services.nginx.upstreams.forge-cache.servers = {
+    "${config.dionix.homelab.forge}:5000" = {
+      max_fails = 1;
+      fail_timeout = "30s";
+    };
+    # Com o forge marcado como fora, vai para cá: recusa na hora
+    "127.0.0.1:9".backup = true;
+  };
 
   # Rede de casa anunciada para a tailnet: de fora, os serviços e o server são
   # alcançados por aqui
@@ -96,12 +106,14 @@ in
       bazarr = em 6767;
       qbittorrent = em 8081;
 
-      # forge: cache binário (forge-cache.nix). Desligado = "não tenho" (404 em
-      # 2 s): o Nix do notebook segue para o cache oficial, sem esperar nem acordar
+      # forge: cache binário (forge-cache.nix). Desligado = "não tenho" (404): o
+      # Nix do notebook segue para o cache oficial, sem esperar nem acordar. O
+      # upstream abaixo marca o forge como fora após a primeira falha e passa
+      # para um backup que recusa na hora (502 -> 404), sem o timeout a cada pedido.
       cache = {
-        upstream = "http://${config.dionix.homelab.forge}:5000";
+        upstream = "http://forge-cache";
         extraConfig = ''
-          proxy_connect_timeout 2s;
+          proxy_connect_timeout 500ms;
           error_page 502 504 =404 /404;
           location = /404 {
             internal;

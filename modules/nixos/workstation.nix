@@ -26,8 +26,10 @@
 
   # Cache binário do forge: baixa o que ele já compilou. Sem a chave (antes da
   # primeira aplicação no forge) nada muda; forge desligado = 404 rápido do Pi.
+  # priority=50: depois do cache oficial (40), para o forge só ser perguntado
+  # sobre o que falta lá (os derivados da própria config).
   nix.settings = lib.mkIf (config.dionix.homelab.cachePublicKey != null) {
-    extra-substituters = [ "https://cache.${config.dionix.homelab.domain}" ];
+    extra-substituters = [ "https://cache.${config.dionix.homelab.domain}?priority=50" ];
     extra-trusted-public-keys = [ config.dionix.homelab.cachePublicKey ];
   };
 
