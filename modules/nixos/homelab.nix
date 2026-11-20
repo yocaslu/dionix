@@ -28,5 +28,10 @@
       default = "64:1c:67:73:ae:b1";
       description = "MAC da rede onboard do `server` (eno1), para o Wake-on-LAN.";
     };
+    forgeMac = lib.mkOption {
+      type = lib.types.str;
+      default = "00:e0:4b:01:57:96";
+      description = "MAC da rede cabeada do `forge`, para o Wake-on-LAN.";
+    };
   };
 }

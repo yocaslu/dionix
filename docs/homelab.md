@@ -42,13 +42,13 @@ O Pi anuncia a `10.42.1.0/24` (`dionix.tailscaleRouter.routes` em `hosts/pi/defa
 
 O server suspende (S3) depois de 45 minutos sem uso e acorda sozinho no próximo acesso:
 
-- **Acordar** (`modules/nixos/server-wake.nix`, no Pi): se o server não responde, o Nginx manda o pedido para o `server-wake`, que envia o Wake-on-LAN e mostra "Aguarde: o servidor está ligando". A página recarrega até o serviço voltar, em geral em poucos segundos. Apps (Nextcloud, DAVx5, Jellyfin) recebem 503 com `Retry-After` e também acordam a máquina. O SSH e o FTP do Switch não passam pelo Pi: use o cartão *Acordar o server* da página inicial (`https://home.vault76.com.br/acordar`).
+- **Acordar** (`modules/nixos/host-wake.nix`, no Pi): se o server não responde, o Nginx manda o pedido para o `host-wake`, que envia o Wake-on-LAN e mostra "Aguarde: o servidor está ligando". A página recarrega até o serviço voltar, em geral em poucos segundos. Apps (Nextcloud, DAVx5, Jellyfin) recebem 503 com `Retry-After` e também acordam a máquina. O SSH e o FTP do Switch não passam pelo Pi: use o cartão *Acordar o server* da página inicial (`https://home.vault76.com.br/acordar`).
 - **Dormir** (`modules/nixos/server-sleep.nix`, no server): a cada 5 minutos, o `server-sleep` suspende se não houve acesso real pelo proxy (o Gatus e a página inicial não contam), não há conexões abertas nos serviços (vídeo, apps com websocket, SSH, FTP), nada de backup, dump, scrub ou deploy rodando, e o Wake-on-LAN está armado. O dump do banco (02:30), o backup (03:00) e o scrub mensal acordam a máquina no horário.
 - **Enquanto dorme**: o Gatus mostra os serviços do server como no ar (o Pi responde "dormindo"), mas as checagens TCP de SSH e FTP ficam vermelhas. As estatísticas do server somem da página inicial, o Prometheus não coleta (gráficos com buracos), o qBittorrent para de semear e a suíte Arr só busca lançamentos com a máquina ligada.
 
 ```sh
 journalctl -u server-sleep -n 20      # no server: por que suspendeu ou não
-journalctl -u server-wake -n 20       # no Pi
+journalctl -u host-wake -n 20       # no Pi
 ```
 
 Para desligar o recurso, `dionix.serverSleep.enable = false` em `hosts/server/default.nix`; o tempo fica em `dionix.serverSleep.idleMinutes`.

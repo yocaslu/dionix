@@ -25,10 +25,22 @@ in
     ../../modules/nixos/homelab.nix
     ../../modules/nixos/status.nix
     ../../modules/nixos/homepage.nix
-    ../../modules/nixos/server-wake.nix
+    ../../modules/nixos/host-wake.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
+
+  # Hosts que o Pi acorda por Wake-on-LAN (modules/nixos/host-wake.nix)
+  dionix.wake.hosts = {
+    server = {
+      ip = config.dionix.homelab.server;
+      mac = config.dionix.homelab.serverMac;
+    };
+    forge = {
+      ip = config.dionix.homelab.forge;
+      mac = config.dionix.homelab.forgeMac;
+    };
+  };
 
   # Rede de casa anunciada para a tailnet: de fora, os serviços e o server são
   # alcançados por aqui

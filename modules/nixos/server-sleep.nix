@@ -1,5 +1,5 @@
 # Suspende o server (S3) quando ninguém usa os serviços; o Pi o acorda por
-# Wake-on-LAN no próximo acesso (server-wake.nix).
+# Wake-on-LAN no próximo acesso (host-wake.nix).
 #
 # A cada 5 minutos o `server-sleep` confere, e só suspende se tudo passar:
 #   - pelo menos 15 min desde o boot ou desde a última volta da suspensão
@@ -20,7 +20,7 @@
 }:
 let
   cfg = config.dionix.serverSleep;
-  sono = "https://pi.${config.dionix.homelab.domain}/sono";
+  sono = "https://pi.${config.dionix.homelab.domain}/sono/server";
 
   verificar = pkgs.writeShellApplication {
     name = "server-sleep";

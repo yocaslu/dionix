@@ -30,7 +30,7 @@
   };
 
   # Wake-on-LAN (pacote mágico) em qualquer porta Ethernet: o Pi acorda o server
-  # da suspensão ou do desligamento (server-wake.nix). Mantém a política
+  # da suspensão ou do desligamento (host-wake.nix). Mantém a política
   # padrão de nomes, que um .link próprio substituiria.
   systemd.network.links."10-wake-on-lan" = {
     matchConfig.Type = "ether";
