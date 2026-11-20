@@ -2,6 +2,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -12,6 +13,9 @@ let
     pkgs.writeShellApplication {
       inherit name;
       runtimeInputs = deps;
+      runtimeEnv = {
+        DIONIX_DOMAIN = osConfig.dionix.homelab.domain;
+      };
       text = builtins.readFile ./files/waybar/scripts/${name}.sh;
       bashOptions = [ ];
     };
@@ -23,11 +27,13 @@ let
       coreutils
     ]
   );
-  # O `nh` vem do sistema (programs.nh); jq e git são as dependências da contagem
-  updatesScript = script "updates" (
+  # O `nh` vem do sistema (programs.nh); o `gh` é o do próprio usuário
+  forgeUpdateScript = script "forge-update" (
     with pkgs;
     [
+      curl
       jq
+      gh
       git
       coreutils
       procps
@@ -42,10 +48,10 @@ in
     systemd.enable = true;
     style = config.dionix.render (builtins.readFile ./files/waybar/style.css);
     settings.main = lib.recursiveUpdate base {
-      # Atualizações: compara o nixpkgs do flake.lock com o canal (antes pacman + AUR)
+      # Atualizações compiladas pelo forge: avisa, mescla o PR e aplica
       "custom/updates" = {
-        exec = lib.getExe updatesScript;
-        on-click = "alacritty -e ${lib.getExe updatesScript} --upgrade";
+        exec = lib.getExe forgeUpdateScript;
+        on-click = "alacritty -e ${lib.getExe forgeUpdateScript} --aplicar";
       };
       # Clima via wttr.in (local pelo IP, ou ~/.config/waybar/weather-location)
       "custom/weather" = {

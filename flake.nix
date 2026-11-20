@@ -99,6 +99,19 @@
             bash ${./home/desktop/files/theme/theme-test.sh} ${./home/desktop/files/theme/theme.sh}
             touch $out
           '';
+          # Testes do widget do forge na Waybar
+          forge-widget =
+            pkgs.runCommand "forge-widget-test"
+              {
+                nativeBuildInputs = with pkgs; [
+                  jq
+                  bash
+                ];
+              }
+              ''
+                bash ${./home/desktop/files/waybar/scripts/forge-update-test.sh} ${./home/desktop/files/waybar/scripts/forge-update.sh}
+                touch $out
+              '';
           # Testes do comando `ssh-key-restore`
           ssh-key-restore =
             pkgs.runCommand "ssh-key-restore-test"

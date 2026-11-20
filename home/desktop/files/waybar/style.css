@@ -113,6 +113,8 @@ window#waybar {
 #custom-power          { color: @base08@; }
 #custom-sys            { color: @base04@; }
 #custom-updates        { color: @base09@; }
+#custom-updates.building { color: @base04@; }
+#custom-updates.failed { color: @base08@; }
 #custom-weather        { color: @base0C@; }
 
 /* Gaveta "sys": os módulos escondidos ganham um espaço entre si */

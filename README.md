@@ -145,7 +145,7 @@ nixos-rebuild switch --flake .#pi --target-host dio@<ip-do-pi> --sudo
 
 O `nh` também limpa gerações antigas sozinho (mantém as dos últimos 14 dias e no mínimo 5). Para voltar a uma geração anterior, escolha-a no menu do boot ou rode `sudo nixos-rebuild switch --rollback`.
 
-O módulo `upd` da Waybar mostra há quantos dias o nixpkgs do `flake.lock` foi fixado, quando o canal tem commits novos. O clique roda o `syu`.
+O módulo `upd` da Waybar mostra o PR de atualização que o forge compilou (`#N`; `…` compilando, `!` falhou). O clique mescla o PR e aplica com o cache do forge.
 
 ## O que mudou em relação aos dotfiles
 
@@ -161,7 +161,7 @@ A migração mantém atalhos, cores e comportamento. Algumas peças mudaram porq
 | `.chezmoiexternal.toml` (plugins do zsh, tema do bat) | `zsh-autosuggestions`, `zsh-syntax-highlighting`, `zsh-fzf-tab` do nixpkgs; o bat já traz o Catppuccin |
 | `ya pkg add yazi-rs/flavors:catppuccin-mocha` | Flavor vindo do input `yazi-flavors` |
 | Mason (LSPs do Neovim) | LSPs, stylua e compilador do treesitter vêm do Nix (`programs.neovim.extraPackages`); o lazy.nvim continua baixando os plugins |
-| `updates.sh` contando pacman + AUR | Compara o nixpkgs do `flake.lock` com o canal |
+| `updates.sh` contando pacman + AUR | Mostra o PR compilado pelo forge e aplica pelo clique |
 | Sway iniciado pelo TTY + `environment.d` | Login pelo tuigreet; variáveis da sessão pelo Home Manager |
 
 Ficaram de fora: as configs legadas de i3/X11 (`.xinitrc`, `.xmmp.sh`, `.screenlayout/`), o Nushell e o Xonsh, os scripts de teste em `sway/scripts/` e os aliases `fcode` (Flatpak), `install-yay` e `install-nvchad`.

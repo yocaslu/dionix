@@ -226,12 +226,12 @@ colors: {
     tooltip-format = "bluetooth, temperatura e perfil de energia";
   };
   "custom/updates" = {
-    exec = "~/.config/waybar/scripts/updates.sh";
+    exec = "~/.config/waybar/scripts/forge-update.sh";
     return-type = "json";
     format = "<span alpha='55%'>upd</span> {}";
     interval = 1800;
     signal = 8;
-    on-click = "alacritty -e ~/.config/waybar/scripts/updates.sh --upgrade";
+    on-click = "alacritty -e ~/.config/waybar/scripts/forge-update.sh --aplicar";
   };
   "custom/weather" = {
     exec = "~/.config/waybar/scripts/weather.sh";
