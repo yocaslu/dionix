@@ -99,6 +99,19 @@
             bash ${./home/desktop/files/theme/theme-test.sh} ${./home/desktop/files/theme/theme.sh}
             touch $out
           '';
+          # Testes do widget do forge na Waybar
+          forge-widget =
+            pkgs.runCommand "forge-widget-test"
+              {
+                nativeBuildInputs = with pkgs; [
+                  jq
+                  bash
+                ];
+              }
+              ''
+                bash ${./home/desktop/files/waybar/scripts/forge-update-test.sh} ${./home/desktop/files/waybar/scripts/forge-update.sh}
+                touch $out
+              '';
           # Testes do comando `ssh-key-restore`
           ssh-key-restore =
             pkgs.runCommand "ssh-key-restore-test"
@@ -112,9 +125,19 @@
                 bash ${./home/desktop/files/ssh-key-restore/ssh-key-restore-test.sh} ${./home/desktop/files/ssh-key-restore/ssh-key-restore.sh}
                 touch $out
               '';
-          # Testes do server-wake (Pi): pedidos simultâneos na volta do server
-          server-wake = pkgs.runCommand "server-wake-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-            python3 ${./modules/nixos/files/server-wake-test.py} ${./modules/nixos/files/server-wake.py}
+          # Testes do host-wake (Pi): pedidos simultâneos na volta do server
+          host-wake = pkgs.runCommand "host-wake-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./modules/nixos/files/host-wake-test.py} ${./modules/nixos/files/host-wake.py}
+            touch $out
+          '';
+          # Testes do update-watch (Pi): conferência do canal e estado das atualizações
+          update-watch = pkgs.runCommand "update-watch-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./modules/nixos/files/update-watch-test.py} ${./modules/nixos/files/update-watch.py}
+            touch $out
+          '';
+          # Testes do forge-update (forge): atualização, PR e aplicação da main
+          forge-update = pkgs.runCommand "forge-update-test" { nativeBuildInputs = [ pkgs.jq ]; } ''
+            bash ${./modules/nixos/files/forge-update-test.sh} ${./modules/nixos/files/forge-update.sh}
             touch $out
           '';
         };

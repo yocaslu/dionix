@@ -5,7 +5,7 @@ Configuração NixOS + [Home Manager](https://github.com/nix-community/home-mana
 | Host | Máquina | Papéis |
 |---|---|---|
 | `notebook` | Notebook de desenvolvimento (ideapad 3) | base + estação de trabalho + notebook (Wi-Fi, Bluetooth, touchpad, tampa) |
-| `forge` | Servidor de desenvolvimento headless, sempre ligado (antigo desktop: i5-3470, 12 GB, SSD de 240 GB, 10.42.1.3); Git, segredos, CI, cache e deploy nos próximos sub-projetos | base + builds (12 GB, limites de disco, emulação ARM) + node exporter |
+| `forge` | Servidor de desenvolvimento headless, que desliga sozinho e acorda por Wake-on-LAN (antigo desktop: i5-3470, 12 GB, SSD de 240 GB, 10.42.1.3); Git, segredos, CI e deploy nos próximos sub-projetos | base + builds (12 GB, limites de disco, emulação ARM) + node exporter + `host-sleep` + `forge-update` (atualizações) + `forge-cache` (cache binário) |
 | `server` | Servidor do homelab, direto no hardware (i7-4790, iGPU HD 4600, 10.42.1.22) | base + espelho ZFS + Nextcloud (Collabora, Whiteboard, Talk) + mídia (Jellyfin, Arr, qBittorrent) + FTP dos jogos do Switch + Prometheus/Grafana, tudo nativo |
 | `pi` | Raspberry Pi 4 (aarch64) | base + imagem SD + roteador Tailscale + DNS (Technitium) + proxy reverso (Nginx) + LDAP (lldap) + status (Gatus) + backup |
 
@@ -28,6 +28,11 @@ modules/nixos/
   workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
   forge.nix                Rede cabeada, builds em 12 GB, limites do SSD e emulação ARM (só no forge)
+  host-sleep.nix           Suspende (server) ou desliga (forge) quando ninguém usa
+  host-wake.nix            Pi: Wake-on-LAN por host, página "Aguarde" e /acordar
+  update-watch.nix         Pi: confere o canal do nixpkgs e acorda o forge
+  forge-update.nix         Forge: compila as atualizações, abre o PR e aplica a main
+  forge-cache.nix          Forge: store servido como cache binário (Harmonia)
   docker-host.nix          Docker, limpeza automática, oci-containers (sem uso: tudo é nativo)
   proxmox-vm.nix           agente QEMU, console serial, GRUB (sem uso: para VMs futuras)
   raspberry-pi.nix         imagem do cartão SD do Pi 4, menos escrita no cartão
@@ -145,7 +150,7 @@ nixos-rebuild switch --flake .#pi --target-host dio@<ip-do-pi> --sudo
 
 O `nh` também limpa gerações antigas sozinho (mantém as dos últimos 14 dias e no mínimo 5). Para voltar a uma geração anterior, escolha-a no menu do boot ou rode `sudo nixos-rebuild switch --rollback`.
 
-O módulo `upd` da Waybar mostra há quantos dias o nixpkgs do `flake.lock` foi fixado, quando o canal tem commits novos. O clique roda o `syu`.
+O módulo `upd` da Waybar mostra o PR de atualização que o forge compilou (`#N`; `…` compilando, `!` falhou). O clique mescla o PR e aplica com o cache do forge.
 
 ## O que mudou em relação aos dotfiles
 
@@ -161,7 +166,7 @@ A migração mantém atalhos, cores e comportamento. Algumas peças mudaram porq
 | `.chezmoiexternal.toml` (plugins do zsh, tema do bat) | `zsh-autosuggestions`, `zsh-syntax-highlighting`, `zsh-fzf-tab` do nixpkgs; o bat já traz o Catppuccin |
 | `ya pkg add yazi-rs/flavors:catppuccin-mocha` | Flavor vindo do input `yazi-flavors` |
 | Mason (LSPs do Neovim) | LSPs, stylua e compilador do treesitter vêm do Nix (`programs.neovim.extraPackages`); o lazy.nvim continua baixando os plugins |
-| `updates.sh` contando pacman + AUR | Compara o nixpkgs do `flake.lock` com o canal |
+| `updates.sh` contando pacman + AUR | Mostra o PR compilado pelo forge e aplica pelo clique |
 | Sway iniciado pelo TTY + `environment.d` | Login pelo tuigreet; variáveis da sessão pelo Home Manager |
 
 Ficaram de fora: as configs legadas de i3/X11 (`.xinitrc`, `.xmmp.sh`, `.screenlayout/`), o Nushell e o Xonsh, os scripts de teste em `sway/scripts/` e os aliases `fcode` (Flatpak), `install-yay` e `install-nvchad`.

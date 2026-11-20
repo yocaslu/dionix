@@ -4,12 +4,16 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   username,
   ...
 }:
 {
-  imports = [ inputs.stylix.nixosModules.stylix ];
+  imports = [
+    inputs.stylix.nixosModules.stylix
+    ./homelab.nix
+  ];
 
   # Sem alvos no sistema: o tema fica no Home Manager (home/desktop/themes.nix),
   # e o tuigreet e o XFCE não mudam
@@ -18,6 +22,15 @@
     autoEnable = false;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     homeManagerIntegration.followSystem = false;
+  };
+
+  # Cache binário do forge: baixa o que ele já compilou. Sem a chave (antes da
+  # primeira aplicação no forge) nada muda; forge desligado = 404 rápido do Pi.
+  # priority=50: depois do cache oficial (40), para o forge só ser perguntado
+  # sobre o que falta lá (os derivados da própria config).
+  nix.settings = lib.mkIf (config.dionix.homelab.cachePublicKey != null) {
+    extra-substituters = [ "https://cache.${config.dionix.homelab.domain}?priority=50" ];
+    extra-trusted-public-keys = [ config.dionix.homelab.cachePublicKey ];
   };
 
   # Sessões gráficas -------------------------------------------------------

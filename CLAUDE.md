@@ -4,7 +4,7 @@ Guia para o Claude trabalhar neste repositório.
 
 ## O que é
 
-Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `forge` (servidor de desenvolvimento headless e sempre ligado, antigo desktop, 10.42.1.3: builds com emulação ARM e node exporter; Git, segredos, CI, cache e deploy nos próximos sub-projetos), `server` (direto no hardware, 10.42.1.22, espelho ZFS, todos os serviços nativos: Nextcloud, mídia, FTP do Switch, monitoramento) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium, proxy Nginx, LDAP lldap, status e backup no Google Drive, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
+Flake NixOS + Home Manager (NixOS 26.05) de quatro hosts: `notebook`, `forge` (servidor de desenvolvimento headless, antigo desktop, 10.42.1.3: desliga após 20 min sem uso (`host-sleep`) e o Pi o acorda por Wake-on-LAN (`host-wake`); builds com emulação ARM, compila as atualizações e abre o PR (`forge-update`), serve o cache binário e tem node exporter; Git, segredos, CI e deploy nos próximos sub-projetos), `server` (direto no hardware, 10.42.1.22, espelho ZFS, todos os serviços nativos: Nextcloud, mídia, FTP do Switch, monitoramento) e `pi` (Raspberry Pi 4, aarch64: roteador Tailscale, DNS Technitium, proxy Nginx, LDAP lldap, status e backup no Google Drive, gerado como imagem SD). Usuário: `dio`. O ambiente gráfico (SwayFX, JetBrainsMono Nerd Font, teclado `br`) foi migrado de `yocaslu/dotfiles` (chezmoi).
 
 ## Onde mexer
 

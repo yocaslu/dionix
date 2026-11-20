@@ -25,10 +25,36 @@ in
     ../../modules/nixos/homelab.nix
     ../../modules/nixos/status.nix
     ../../modules/nixos/homepage.nix
-    ../../modules/nixos/server-wake.nix
+    ../../modules/nixos/host-wake.nix
+    ../../modules/nixos/update-watch.nix
     ../../modules/nixos/node-exporter.nix
     ../../modules/nixos/backup.nix
   ];
+
+  # Hosts que o Pi acorda por Wake-on-LAN (modules/nixos/host-wake.nix)
+  dionix.wake.hosts = {
+    server = {
+      ip = config.dionix.homelab.server;
+      mac = config.dionix.homelab.serverMac;
+    };
+    forge = {
+      ip = config.dionix.homelab.forge;
+      mac = config.dionix.homelab.forgeMac;
+    };
+  };
+
+  # O cache do forge responde 404 com ele desligado, sem acordá-lo (o upstream
+  # `forge-cache` já não casa com o IP do host; fica como documentação)
+  dionix.wake.ignore = [ "cache" ];
+
+  services.nginx.upstreams.forge-cache.servers = {
+    "${config.dionix.homelab.forge}:5000" = {
+      max_fails = 1;
+      fail_timeout = "30s";
+    };
+    # Com o forge marcado como fora, vai para cá: recusa na hora
+    "127.0.0.1:9".backup = true;
+  };
 
   # Rede de casa anunciada para a tailnet: de fora, os serviços e o server são
   # alcançados por aqui
@@ -79,6 +105,22 @@ in
       prowlarr = em 9696;
       bazarr = em 6767;
       qbittorrent = em 8081;
+
+      # forge: cache binário (forge-cache.nix). Desligado = "não tenho" (404): o
+      # Nix do notebook segue para o cache oficial, sem esperar nem acordar. O
+      # upstream abaixo marca o forge como fora após a primeira falha e passa
+      # para um backup que recusa na hora (502 -> 404), sem o timeout a cada pedido.
+      cache = {
+        upstream = "http://forge-cache";
+        extraConfig = ''
+          proxy_connect_timeout 500ms;
+          error_page 502 504 =404 /404;
+          location = /404 {
+            internal;
+            return 404;
+          }
+        '';
+      };
 
       # server: monitoramento (monitoring.nix)
       grafana = em 3000;

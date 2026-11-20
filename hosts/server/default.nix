@@ -8,7 +8,7 @@
 #   media.nix         Jellyfin (VA-API na iGPU), Seerr, suite Arr, qBittorrent
 #   switch-ftp.nix    FTP só leitura dos jogos do Switch para a rede de casa
 #   monitoring.nix    Prometheus + Grafana
-#   server-sleep.nix  suspende quando ninguém usa (o Pi acorda por Wake-on-LAN)
+#   host-sleep.nix    suspende quando ninguém usa (o Pi acorda por Wake-on-LAN)
 #
 # Instalação e atualização: docs/homelab.md.
 {
@@ -27,12 +27,16 @@
     # NUT pausado: precisa de preparativos no Switch (switch-nut.nix fica para depois)
     ../../modules/nixos/monitoring.nix
     ../../modules/nixos/backup.nix
-    ../../modules/nixos/server-sleep.nix
+    ../../modules/nixos/host-sleep.nix
   ];
 
   # Suspende após 45 min sem uso; as tarefas da madrugada acordam a máquina
-  dionix.serverSleep = {
+  dionix.sleep = {
     enable = true;
+    mode = "suspend";
+    idleMinutes = 45;
+    # O Prometheus é consultado pela página inicial do Pi
+    ignoredPorts = [ 9090 ];
     blockers = [
       "restic-backups-gdrive.service"
       "postgresqlBackup-nextcloud.service"

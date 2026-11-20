@@ -1,21 +1,23 @@
-# Acorda o server por Wake-on-LAN e responde no lugar dele enquanto liga.
-# O Nginx do Pi manda para cá os pedidos que o server não atendeu (502/504),
-# com X-Dionix-Uso: 1 para acessos reais e 0 para as checagens do próprio Pi.
-# Configuração por variáveis de ambiente (server-wake.nix).
+# Acorda hosts (server, forge) por Wake-on-LAN e responde no lugar deles
+# enquanto ligam. O Nginx do Pi manda para cá os pedidos que o host não atendeu
+# (502/504), com X-Dionix-Host (qual host) e X-Dionix-Uso: 1 para acessos reais
+# ou 0 para as checagens do próprio Pi.
+# Configuração por variáveis de ambiente (host-wake.nix).
 import html
+import json
 import os
 import socket
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-MAC = bytes.fromhex(os.environ["MAC"].replace(":", ""))
+# {"server": {"ip": "...", "mac": "..."}, "forge": {...}}
+HOSTS = json.loads(os.environ["HOSTS"])
 BROADCAST = os.environ["BROADCAST"]
-SERVER = os.environ["SERVER"]
-LOG = os.environ["LOG"]
-DORMINDO = os.path.join(os.environ["STATE_DIRECTORY"], "dormindo")
-INTERVALO = 30  # segundos entre dois pacotes mágicos
+LOG_DIR = os.environ["LOG_DIR"]
+ESTADO = os.environ["STATE_DIRECTORY"]
+INTERVALO = 30  # segundos entre dois pacotes mágicos de cada host
 
-ultimo_pacote = 0.0
+ultimo_pacote = {}  # host -> instante do último pacote
 
 PAGINA = """<!doctype html>
 <html lang="pt-BR">
@@ -50,28 +52,32 @@ PAGINA = """<!doctype html>
 """
 
 
-def acordar():
-    global ultimo_pacote
-    if time.monotonic() - ultimo_pacote < INTERVALO:
+def arquivo_dormindo(host):
+    return os.path.join(ESTADO, host, "dormindo")
+
+
+def acordar(host):
+    if time.monotonic() - ultimo_pacote.get(host, -INTERVALO) < INTERVALO:
         return
-    ultimo_pacote = time.monotonic()
+    ultimo_pacote[host] = time.monotonic()
+    mac = bytes.fromhex(HOSTS[host]["mac"].replace(":", ""))
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        s.sendto(b"\xff" * 6 + MAC * 16, (BROADCAST, 9))
+        s.sendto(b"\xff" * 6 + mac * 16, (BROADCAST, 9))
 
 
-def apagar_dormindo():
-    # Dois pedidos podem chegar juntos quando o server volta: o outro já apagou
+def apagar_dormindo(host):
+    # Dois pedidos podem chegar juntos quando o host volta: o outro já apagou
     try:
-        os.remove(DORMINDO)
+        os.remove(arquivo_dormindo(host))
     except FileNotFoundError:
         pass
 
 
-def server_acordado():
+def host_acordado(host):
     # O SSH responde assim que a rede volta, antes dos outros serviços
     try:
-        socket.create_connection((SERVER, 22), timeout=1).close()
+        socket.create_connection((HOSTS[host]["ip"], 22), timeout=1).close()
         return True
     except OSError:
         return False
@@ -109,54 +115,69 @@ class Pedido(BaseHTTPRequestHandler):
 
     def tratar(self):
         uso = self.headers.get("X-Dionix-Uso")
-        if self.path == "/acordar" and uso == "1":
-            acordar()
+        partes = self.path.strip("/").split("/")
+        # /acordar (= server, compatível) e /acordar/<host>
+        if partes[0] == "acordar" and len(partes) <= 2 and uso == "1":
+            host = partes[1] if len(partes) == 2 else "server"
+            if host not in HOSTS:
+                return self.responder(404, "host desconhecido\n")
+            acordar(host)
             return self.pagina(
                 200,
-                "Acordando o server",
-                "Pacote enviado. O server responde em alguns segundos.",
+                f"Acordando o {host}",
+                f"Pacote enviado. O {host} responde em alguns segundos.",
                 15,
                 "/",
             )
         if uso is not None:
-            return self.espera(uso == "1")
-        if self.path == "/sono/uso":
-            try:
-                ultimo = int(os.stat(LOG).st_mtime)
-            except FileNotFoundError:
-                ultimo = 0
-            return self.responder(200, f"{ultimo}\n")
-        if self.path == "/sono/dormindo" and self.command == "POST":
-            open(DORMINDO, "w").close()
-            return self.responder(200, "ok\n")
-        if self.path == "/sono/acordado" and self.command == "POST":
-            apagar_dormindo()
-            return self.responder(200, "ok\n")
+            host = self.headers.get("X-Dionix-Host")
+            if host not in HOSTS:
+                return self.responder(404, "host desconhecido\n")
+            return self.espera(host, uso == "1")
+        # /sono/<host>/{uso,dormindo,acordado}
+        if partes[0] == "sono" and len(partes) == 3:
+            _, host, acao = partes
+            if host not in HOSTS:
+                return self.responder(404, "host desconhecido\n")
+            if acao == "uso" and self.command in ("GET", "HEAD"):
+                log = os.path.join(LOG_DIR, f"uso-{host}.log")
+                try:
+                    ultimo = int(os.stat(log).st_mtime)
+                except FileNotFoundError:
+                    ultimo = 0
+                return self.responder(200, f"{ultimo}\n")
+            if acao == "dormindo" and self.command == "POST":
+                os.makedirs(os.path.join(ESTADO, host), exist_ok=True)
+                open(arquivo_dormindo(host), "w").close()
+                return self.responder(200, "ok\n")
+            if acao == "acordado" and self.command == "POST":
+                apagar_dormindo(host)
+                return self.responder(200, "ok\n")
         self.responder(404, "não encontrado\n")
 
-    def espera(self, real):
-        host = self.headers.get("Host", "o serviço")
-        if server_acordado():
+    def espera(self, host, real):
+        servico = self.headers.get("Host", "o serviço")
+        if host_acordado(host):
             # A máquina está de pé: quem falhou foi o serviço
-            apagar_dormindo()
+            apagar_dormindo(host)
             return self.pagina(
                 502,
                 "Serviço fora do ar",
-                f"O server está ligado, mas {host} não respondeu.",
+                f"O {host} está ligado, mas {servico} não respondeu.",
                 30,
             )
         if real:
-            acordar()
+            acordar(host)
             return self.pagina(
                 503,
                 "Aguarde: o servidor está ligando",
-                f"{host} volta em alguns segundos.",
+                f"{servico} volta em alguns segundos.",
                 5,
             )
         # Checagens do Pi (Gatus, página inicial) não acordam a máquina
-        if os.path.exists(DORMINDO):
+        if os.path.exists(arquivo_dormindo(host)):
             return self.responder(200, "dormindo\n")
-        self.responder(503, "server fora do ar\n")
+        self.responder(503, f"{host} fora do ar\n")
 
     def do_GET(self):
         self.tratar()

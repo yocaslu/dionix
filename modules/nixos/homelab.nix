@@ -28,5 +28,20 @@
       default = "64:1c:67:73:ae:b1";
       description = "MAC da rede onboard do `server` (eno1), para o Wake-on-LAN.";
     };
+    forgeMac = lib.mkOption {
+      type = lib.types.str;
+      default = "00:e0:4b:01:57:96";
+      description = "MAC da rede cabeada do `forge`, para o Wake-on-LAN.";
+    };
+    cachePublicKey = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "forge-1:AAAA...=";
+      description = ''
+        Chave pública do cache binário do forge (/var/lib/secrets/cache-key.pub
+        no forge). Com ela definida, o notebook usa https://cache.<domínio> como
+        substituter. Nula na primeira aplicação, antes de a chave existir.
+      '';
+    };
   };
 }
