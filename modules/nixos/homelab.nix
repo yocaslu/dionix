@@ -35,7 +35,8 @@
     };
     cachePublicKey = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
+      # Gerada no primeiro boot do forge (20/11/2026)
+      default = "forge-1:D9ALfuC/4YPMe9FO3afaimGHOimE/HWD6TBuYbTiCEE=";
       example = "forge-1:AAAA...=";
       description = ''
         Chave pública do cache binário do forge (/var/lib/secrets/cache-key.pub
