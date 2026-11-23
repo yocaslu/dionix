@@ -25,7 +25,7 @@ docs/backup.md             backup no Google Drive (rclone + restic)
 hosts/<host>/              default.nix (papéis do host) + hardware-configuration.nix
 modules/nixos/
   common.nix               Nix, nh, idioma, usuário dio, SSH, zsh + home/cli
-  workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman + home/desktop
+  workstation.nix          SwayFX, XFCE, tuigreet, áudio, fontes, podman, docker + home/desktop
   laptop.nix               Bluetooth, touchpad, tampa
   forge.nix                Rede cabeada, builds em 12 GB, limites do SSD e emulação ARM (só no forge)
   host-sleep.nix           Suspende (server) ou desliga (forge) quando ninguém usa

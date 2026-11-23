@@ -91,7 +91,11 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
 
-  users.users.${username}.extraGroups = [ "networkmanager" ];
+  # docker: usar o docker sem sudo (o grupo equivale a root; veja Desenvolvimento)
+  users.users.${username}.extraGroups = [
+    "networkmanager"
+    "docker"
+  ];
 
   # Serviços de desktop usados pelos apps GTK, pelo tema e pelo yazi
   programs.dconf.enable = true;
@@ -119,6 +123,18 @@
   virtualisation.podman = {
     enable = true;
     dockerCompat = false;
+  };
+
+  # Docker ao lado do podman (o distrobox continua no podman). Sobe pelo socket
+  # no primeiro uso, sem atrasar o boot. O usuário entra no grupo docker (acima,
+  # equivale a root) para usar o docker sem sudo.
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+    autoPrune = {
+      enable = true;
+      dates = "weekly";
+    };
   };
 
   # Binários genéricos baixados da internet (ex.: extensões, toolchains)
