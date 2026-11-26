@@ -158,6 +158,9 @@ in
   # Documentos: o Pi publica collabora.<domínio> com HTTPS
   services.collabora-online = {
     enable = true;
+    # Do unstable: no 26.05 o LibreOffice interno do Collabora foi marcado como
+    # inseguro (fim de vida) e a configuração do server deixava de avaliar
+    package = pkgs.unstable.collabora-online;
     port = 9980;
     settings = {
       server_name = "collabora.${domain}";
